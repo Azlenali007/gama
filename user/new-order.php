@@ -24,7 +24,7 @@ $user = Auth::user();
       </a>
       <div class="balance-pill-card">
         <div class="balance-label">Balance:</div>
-        <div class="balance-value live-user-balance"><?= formatCurrency((float)($user['balance'] ?? 850.50)) ?></div>
+        <div class="balance-value live-user-balance"><?= formatCurrency((float)($user['balance'] ?? 0.00)) ?></div>
       </div>
     </div>
 
@@ -72,7 +72,7 @@ $user = Auth::user();
             <i data-lucide="instagram" style="color: #ec4899;"></i>
             <span class="service-item-title">Instagram Followers</span>
           </div>
-          <span class="service-item-rate">₹35 / 1K</span>
+          <span class="service-item-rate"><?= htmlspecialchars(getCurrencySymbol()) ?>35 / 1K</span>
         </div>
 
         <div class="service-card-item" data-category="instagram" data-rate="20" data-name="Instagram Likes" data-min="100" data-max="500000" data-badges="High Quality | Instant Start | Non-Drop">
@@ -80,7 +80,7 @@ $user = Auth::user();
             <i data-lucide="heart" style="color: #ec4899;"></i>
             <span class="service-item-title">Instagram Likes</span>
           </div>
-          <span class="service-item-rate">₹20 / 1K</span>
+          <span class="service-item-rate"><?= htmlspecialchars(getCurrencySymbol()) ?>20 / 1K</span>
         </div>
 
         <div class="service-card-item" data-category="instagram" data-rate="15" data-name="Instagram Views" data-min="500" data-max="2000000" data-badges="Instant Start | High Retention | 100% Safe">
@@ -88,7 +88,7 @@ $user = Auth::user();
             <i data-lucide="play-circle" style="color: #ec4899;"></i>
             <span class="service-item-title">Instagram Views</span>
           </div>
-          <span class="service-item-rate">₹15 / 1K</span>
+          <span class="service-item-rate"><?= htmlspecialchars(getCurrencySymbol()) ?>15 / 1K</span>
         </div>
 
         <div class="service-card-item" data-category="instagram" data-rate="50" data-name="Instagram Comments" data-min="10" data-max="50000" data-badges="Custom Comments | Verified Look | HQ">
@@ -96,7 +96,7 @@ $user = Auth::user();
             <i data-lucide="message-circle" style="color: #ec4899;"></i>
             <span class="service-item-title">Instagram Comments</span>
           </div>
-          <span class="service-item-rate">₹50 / 1K</span>
+          <span class="service-item-rate"><?= htmlspecialchars(getCurrencySymbol()) ?>50 / 1K</span>
         </div>
 
         <div class="service-details-card" style="margin-top: 24px;">
@@ -108,7 +108,7 @@ $user = Auth::user();
               </div>
             </div>
             <div style="text-align: right;">
-              <div id="selected-service-rate" style="font-size: 20px; font-weight: 900; color: #2563eb;">₹35 / 1K</div>
+              <div id="selected-service-rate" style="font-size: 20px; font-weight: 900; color: #2563eb;"><?= htmlspecialchars(getCurrencySymbol()) ?>35 / 1K</div>
               <span class="badge-speed" style="display: inline-block; margin-top: 4px;">Fast Delivery</span>
             </div>
           </div>
@@ -132,7 +132,7 @@ $user = Auth::user();
 
           <div class="total-price-bar">
             <span class="total-price-label">Total Price</span>
-            <span class="total-price-val" id="calculated-order-price">₹35.00</span>
+            <span class="total-price-val" id="calculated-order-price"><?= htmlspecialchars(getCurrencySymbol()) ?>35.00</span>
           </div>
 
           <button type="button" class="btn-primary" id="btn-place-order" onclick="placeNewOrder()">
@@ -143,6 +143,11 @@ $user = Auth::user();
     </div>
   </div>
 
+  <script>
+    window.APP_CURRENCY_SYMBOL = <?= json_encode(getCurrencySymbol()) ?>;
+    window.APP_CURRENCY_CODE = <?= json_encode(getCurrencyCode()) ?>;
+    window.APP_CURRENCY_NAME = <?= json_encode(getCurrencyName()) ?>;
+  </script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="/assets/js/user.js"></script>
   <script>lucide.createIcons();</script>

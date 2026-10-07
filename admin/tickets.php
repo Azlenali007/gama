@@ -3,8 +3,34 @@
  * SMM Panel - Admin Module: Support Desk & Tickets
  * Protected Server-Side
  */
-require_once __DIR__ . '/../includes/admin-auth.php';
+$adminPageTitle = 'Support Tickets';
+$activeAdminNav = 'tickets';
+
+require_once __DIR__ . '/../includes/admin-header.php';
+require_once __DIR__ . '/../includes/admin-navbar.php';
+
 $db = Database::getConnection();
+
+// Handle Status Update
+if (isset($_GET['action']) && $_GET['action'] === 'close' && isset($_GET['id'])) {
+    $tid = (int)$_GET['id'];
+    $stmt = $db->prepare("SELECT user_id, ticket_code, subject FROM tickets WHERE id = :id LIMIT 1");
+    $stmt->execute([':id' => $tid]);
+    $t = $stmt->fetch();
+    if ($t) {
+        $upd = $db->prepare("UPDATE tickets SET status = 'closed', updated_at = NOW() WHERE id = :id");
+        $upd->execute([':id' => $tid]);
+        createNotification(
+            (int)$t['user_id'],
+            "Support Ticket Resolved",
+            "Your ticket {$t['ticket_code']} ({$t['subject']}) has been marked as resolved.",
+            'ticket',
+            '/user/tickets.php'
+        );
+    }
+    header("Location: /admin/tickets.php");
+    exit;
+}
 
 $tickets = $db->query("
     SELECT t.*, u.name as user_name, u.user_id_code 
@@ -13,32 +39,23 @@ $tickets = $db->query("
     ORDER BY t.id DESC
 ")->fetchAll();
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Support Tickets - <?= htmlspecialchars(APP_NAME) ?></title>
-  <link rel="stylesheet" href="/assets/css/style.css">
-  <link rel="stylesheet" href="/assets/css/admin.css">
-  <link rel="stylesheet" href="/assets/css/responsive.css">
-</head>
-<body>
-  <div class="app-container">
-    <div class="page-back-header">
-      <a href="/admin/dashboard.php" class="back-btn-link">
-        <span class="back-icon-circle"><i data-lucide="arrow-left"></i></span>
-        <span>Support Desk</span>
-      </a>
-      <span class="badge badge-info"><?= count($tickets) ?> Tickets</span>
-    </div>
 
-    <div class="data-table-card">
+<div class="admin-layout">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 900; color: #0f172a; margin: 0;">Support Helpdesk</h1>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">Customer inquiries, order issues, and ticket conversations.</p>
+    </div>
+    <span class="badge badge-info" style="font-size: 13px; padding: 6px 14px;"><?= count($tickets) ?> Tickets</span>
+  </div>
+
+  <div class="data-table-card">
+    <div class="table-responsive">
       <table class="app-table">
         <thead>
           <tr>
             <th>Ticket Code</th>
-            <th>User</th>
+            <th>Customer</th>
             <th>Subject</th>
             <th>Department</th>
             <th>Status</th>
@@ -60,12 +77,18 @@ $tickets = $db->query("
               <tr>
                 <td><strong><?= htmlspecialchars($t['ticket_code']) ?></strong></td>
                 <td><?= htmlspecialchars($t['user_name'] ?: 'User') ?> (<?= htmlspecialchars($t['user_id_code'] ?: '#') ?>)</td>
-                <td><?= htmlspecialchars($t['subject']) ?></td>
-                <td><?= htmlspecialchars($t['department']) ?></td>
+                <td><strong><?= htmlspecialchars($t['subject']) ?></strong></td>
+                <td><span class="badge badge-secondary"><?= htmlspecialchars(strtoupper($t['department'])) ?></span></td>
                 <td><span class="badge <?= getStatusBadgeClass($t['status']) ?>"><?= htmlspecialchars($t['status']) ?></span></td>
-                <td><?= getFormattedDate($t['created_at']) ?></td>
+                <td><?= htmlspecialchars(getFormattedDate($t['created_at'])) ?></td>
                 <td>
-                  <button class="btn-secondary" onclick="showToast('Ticket reply opened', 'info')" style="padding: 6px 12px; font-size: 12px;">Reply</button>
+                  <?php if ($t['status'] !== 'closed'): ?>
+                    <a href="/admin/tickets.php?action=close&id=<?= (int)$t['id'] ?>" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;">
+                      Close Ticket
+                    </a>
+                  <?php else: ?>
+                    <span style="font-size: 12px; color: var(--text-light);">Resolved</span>
+                  <?php endif; ?>
                 </td>
               </tr>
             <?php endforeach; ?>
@@ -74,9 +97,6 @@ $tickets = $db->query("
       </table>
     </div>
   </div>
+</div>
 
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="/assets/js/user.js"></script>
-  <script>lucide.createIcons();</script>
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/admin-footer.php'; ?>

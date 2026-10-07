@@ -4,6 +4,7 @@
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS `notifications`;
 DROP TABLE IF EXISTS `ticket_messages`;
 DROP TABLE IF EXISTS `tickets`;
 DROP TABLE IF EXISTS `transactions`;
@@ -26,7 +27,7 @@ CREATE TABLE `users` (
   `email` VARCHAR(150) NOT NULL UNIQUE,
   `phone` VARCHAR(25) DEFAULT NULL,
   `password_hash` VARCHAR(255) NOT NULL,
-  `balance` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+  `balance` DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
   `currency` VARCHAR(5) NOT NULL DEFAULT 'INR',
   `status` ENUM('active', 'suspended', 'pending') NOT NULL DEFAULT 'active',
   `email_verified` TINYINT(1) NOT NULL DEFAULT 1,
@@ -53,7 +54,7 @@ CREATE TABLE `providers` (
   `name` VARCHAR(100) NOT NULL,
   `api_url` VARCHAR(255) NOT NULL,
   `api_key` VARCHAR(255) NOT NULL,
-  `balance` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+  `balance` DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
   `currency` VARCHAR(5) NOT NULL DEFAULT 'USD',
   `status` ENUM('active', 'disabled') NOT NULL DEFAULT 'active',
   `api_status` ENUM('connected', 'error', 'pending') NOT NULL DEFAULT 'connected',
@@ -78,7 +79,7 @@ CREATE TABLE `services` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `category_id` INT UNSIGNED NOT NULL,
   `name` VARCHAR(200) NOT NULL,
-  `rate_per_1k` DECIMAL(10, 2) NOT NULL,
+  `rate_per_1k` DECIMAL(15, 2) NOT NULL,
   `min_quantity` INT UNSIGNED NOT NULL DEFAULT 100,
   `max_quantity` INT UNSIGNED NOT NULL DEFAULT 1000000,
   `description` TEXT DEFAULT NULL,
@@ -99,7 +100,7 @@ CREATE TABLE `provider_services` (
   `provider_id` INT UNSIGNED NOT NULL,
   `remote_service_id` VARCHAR(50) NOT NULL,
   `name` VARCHAR(200) NOT NULL,
-  `rate` DECIMAL(10, 4) NOT NULL,
+  `rate` DECIMAL(15, 4) NOT NULL,
   `min` INT UNSIGNED NOT NULL,
   `max` INT UNSIGNED NOT NULL,
   `category` VARCHAR(100) DEFAULT NULL,
@@ -116,7 +117,7 @@ CREATE TABLE `orders` (
   `service_id` INT UNSIGNED NOT NULL,
   `target_link` VARCHAR(500) NOT NULL,
   `quantity` INT UNSIGNED NOT NULL,
-  `charge` DECIMAL(10, 2) NOT NULL,
+  `charge` DECIMAL(15, 2) NOT NULL,
   `start_count` INT UNSIGNED DEFAULT 0,
   `remains` INT UNSIGNED DEFAULT 0,
   `status` ENUM('pending', 'processing', 'in_progress', 'completed', 'partial', 'cancelled', 'refunded') NOT NULL DEFAULT 'processing',
@@ -135,8 +136,8 @@ CREATE TABLE `payments` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `transaction_code` VARCHAR(50) NOT NULL UNIQUE,
   `user_id` INT UNSIGNED NOT NULL,
-  `amount` DECIMAL(10, 2) NOT NULL,
-  `fee` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+  `amount` DECIMAL(15, 2) NOT NULL,
+  `fee` DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
   `payment_method` VARCHAR(50) NOT NULL DEFAULT 'Razorpay',
   `gateway_order_id` VARCHAR(100) DEFAULT NULL,
   `gateway_payment_id` VARCHAR(100) DEFAULT NULL,
@@ -150,12 +151,12 @@ CREATE TABLE `transactions` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `user_id` INT UNSIGNED NOT NULL,
   `type` ENUM('add_funds', 'order_payment', 'refund', 'bonus', 'manual_adjustment') NOT NULL,
-  `amount` DECIMAL(10, 2) NOT NULL,
+  `amount` DECIMAL(15, 2) NOT NULL,
   `direction` ENUM('credit', 'debit') NOT NULL,
   `title` VARCHAR(100) NOT NULL,
   `description` VARCHAR(255) DEFAULT NULL,
   `reference_id` VARCHAR(50) DEFAULT NULL,
-  `balance_after` DECIMAL(12, 2) NOT NULL,
+  `balance_after` DECIMAL(15, 2) NOT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -203,5 +204,33 @@ CREATE TABLE `settings` (
   `setting_value` TEXT NOT NULL,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 14. Notifications Table (User-Specific Notifications)
+CREATE TABLE `notifications` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT UNSIGNED NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `message` TEXT NOT NULL,
+  `type` ENUM('info', 'order', 'wallet', 'ticket', 'system') NOT NULL DEFAULT 'info',
+  `is_read` TINYINT(1) NOT NULL DEFAULT 0,
+  `link` VARCHAR(255) DEFAULT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Default Settings Seed
+INSERT INTO `settings` (`setting_key`, `setting_value`) VALUES
+('site_name', 'SMM Panel'),
+('site_tagline', 'Grow Your Social Media'),
+('site_url', 'http://localhost:3000'),
+('currency_symbol', '₹'),
+('currency_code', 'INR'),
+('currency_name', 'Indian Rupee'),
+('min_deposit', '100'),
+('max_deposit', '100000'),
+('razorpay_key_id', 'rzp_test_live_key_123'),
+('razorpay_key_secret', 'rzp_sec_live_secret_456'),
+('cron_secret_key', 'smm_cron_secret_secure_key_2025')
+ON DUPLICATE KEY UPDATE `setting_value` = VALUES(`setting_value`);
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -29,7 +29,7 @@ $user = Auth::user();
       <div>
         <div class="balance-label" style="text-align: left;">Current Balance</div>
         <div class="funds-current-val live-user-balance">
-          <?= formatCurrency((float)($user['balance'] ?? 850.50)) ?>
+          <?= formatCurrency((float)($user['balance'] ?? 0.00)) ?>
         </div>
       </div>
       <div class="brand-icon-box" style="width: 56px; height: 56px; border-radius: 18px;">
@@ -40,11 +40,11 @@ $user = Auth::user();
     <!-- Select Amount (Image 4) -->
     <label class="form-field-label" style="font-size: 15px; margin-bottom: 12px;">Select Amount</label>
     <div class="amount-chips-grid">
-      <div class="amount-chip" data-amount="100">₹100</div>
-      <div class="amount-chip selected" data-amount="200">₹200</div>
-      <div class="amount-chip" data-amount="500">₹500</div>
-      <div class="amount-chip" data-amount="1000">₹1,000</div>
-      <div class="amount-chip" data-amount="2000">₹2,000</div>
+      <div class="amount-chip" data-amount="100"><?= htmlspecialchars(getCurrencySymbol()) ?>100</div>
+      <div class="amount-chip selected" data-amount="200"><?= htmlspecialchars(getCurrencySymbol()) ?>200</div>
+      <div class="amount-chip" data-amount="500"><?= htmlspecialchars(getCurrencySymbol()) ?>500</div>
+      <div class="amount-chip" data-amount="1000"><?= htmlspecialchars(getCurrencySymbol()) ?>1,000</div>
+      <div class="amount-chip" data-amount="2000"><?= htmlspecialchars(getCurrencySymbol()) ?>2,000</div>
       <div class="amount-chip" data-amount="5000">Other</div>
     </div>
 
@@ -59,7 +59,7 @@ $user = Auth::user();
     </div>
 
     <button type="button" class="btn-primary" id="btn-pay-now-funds" onclick="triggerAddFundsPayment()">
-      Pay Now ₹200 &rarr;
+      Pay Now <?= htmlspecialchars(getCurrencySymbol()) ?>200 &rarr;
     </button>
 
     <div class="secure-encryption-note">
@@ -68,6 +68,11 @@ $user = Auth::user();
     </div>
   </div>
 
+  <script>
+    window.APP_CURRENCY_SYMBOL = <?= json_encode(getCurrencySymbol()) ?>;
+    window.APP_CURRENCY_CODE = <?= json_encode(getCurrencyCode()) ?>;
+    window.APP_CURRENCY_NAME = <?= json_encode(getCurrencyName()) ?>;
+  </script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="/assets/js/user.js"></script>
   <script>lucide.createIcons();</script>

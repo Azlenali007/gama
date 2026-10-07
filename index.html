@@ -2,13 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     <title>SMM Panel - Grow Your Social Media</title>
     <meta name="description" content="Premium 3D SMM Panel web application with card carousel navigation, GSAP animations, Swiper.js, provider API sync, order system, and admin management." />
     <meta property="og:title" content="SMM Panel - Grow Your Social Media" />
     <meta property="og:description" content="Premium 3D SMM Panel web application with card carousel navigation, GSAP animations, Swiper.js, provider API sync, order system, and admin management." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Google Fonts: Plus Jakarta Sans & Caveat for cursive script matching reference image -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
     <!-- Swiper.js 3D Slider CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
@@ -20,8 +25,8 @@
     <link rel="stylesheet" href="/assets/css/responsive.css" />
 
     <style>
-      /* Security Auditor & View Switcher Floating Bar */
-      .security-auditor-bar {
+      /* Floating Environment Switcher Bar */
+      .app-switcher-bar {
         position: fixed;
         bottom: 12px;
         left: 50%;
@@ -30,16 +35,16 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        background: rgba(15, 23, 42, 0.94);
+        background: rgba(15, 23, 42, 0.95);
         backdrop-filter: blur(14px);
         padding: 8px 14px;
         border-radius: 9999px;
         border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 14px 35px rgba(0, 0, 0, 0.4);
         max-width: 96vw;
         overflow-x: auto;
       }
-      .auditor-badge {
+      .switcher-badge {
         font-size: 11px;
         font-weight: 800;
         color: #38bdf8;
@@ -52,1163 +57,1545 @@
         border-right: 1px solid rgba(255, 255, 255, 0.15);
         white-space: nowrap;
       }
-      .auditor-btn {
+      .switcher-btn {
         background: rgba(255, 255, 255, 0.08);
         color: #e2e8f0;
         font-size: 11px;
         font-weight: 700;
-        padding: 5px 12px;
+        padding: 6px 12px;
         border-radius: 9999px;
         white-space: nowrap;
         border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
         transition: all 0.2s ease;
       }
-      .auditor-btn:hover {
+      .switcher-btn:hover {
         background: rgba(37, 99, 235, 0.8);
         color: #ffffff;
         border-color: #3b82f6;
       }
-      .auditor-btn.active {
+      .switcher-btn.active {
         background: #2563eb;
         color: #ffffff;
         border-color: #60a5fa;
       }
 
-      /* Installer styles in preview */
-      .installer-step-card {
-        background: #ffffff;
-        border: 1px solid var(--border-light);
-        border-radius: 28px;
-        padding: 36px 32px;
-        box-shadow: var(--shadow-md);
-        margin: 20px auto;
-        max-width: 760px;
+      /* View containers */
+      .app-view-pane {
+        display: none;
+        width: 100%;
+        min-height: 100vh;
       }
-      .installer-progress-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 32px;
-        position: relative;
+      .app-view-pane.active {
+        display: block;
       }
-      .installer-progress-bar::before {
-        content: "";
-        position: absolute;
-        top: 18px;
-        left: 20px;
-        right: 20px;
-        height: 3px;
-        background: #e2e8f0;
-        z-index: 1;
+
+      /* Landing Page custom styling from Reference Image */
+      .landing-bg-wrap {
+        background: radial-gradient(circle at 50% 0%, #edf5ff 0%, #f8fafc 45%, #ffffff 100%);
+        min-height: 100vh;
+        padding-bottom: 90px;
       }
-      .progress-step-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        position: relative;
-        z-index: 2;
-      }
-      .progress-step-circle {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: #ffffff;
-        border: 2px solid #cbd5e1;
-        color: #64748b;
+
+      /* Notification Toast */
+      .toast-popup {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 9999999;
+        padding: 12px 20px;
+        border-radius: 16px;
+        color: #ffffff;
         font-size: 13px;
-        font-weight: 800;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: var(--transition-smooth);
-      }
-      .progress-step-item.active .progress-step-circle {
-        background: var(--primary-blue);
-        border-color: var(--primary-blue);
-        color: #ffffff;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
-      }
-      .progress-step-item.completed .progress-step-circle {
-        background: #10b981;
-        border-color: #10b981;
-        color: #ffffff;
-      }
-      .progress-step-title {
-        font-size: 11px;
         font-weight: 700;
-        color: var(--text-muted);
-      }
-      .progress-step-item.active .progress-step-title {
-        color: var(--primary-blue);
-        font-weight: 800;
-      }
-      .check-row-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 16px;
-        border-radius: 14px;
-        background: #f8fafc;
-        margin-bottom: 10px;
-        border: 1px solid var(--border-light);
-      }
-      .check-item-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: #1e293b;
         display: flex;
         align-items: center;
         gap: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        opacity: 0;
+        transform: translateY(-15px);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        pointer-events: none;
       }
-      .step-section-pane {
-        display: none;
-      }
-      .step-section-pane.active {
-        display: block;
+      .toast-popup.visible {
+        opacity: 1;
+        transform: translateY(0);
       }
     </style>
   </head>
-  <body>
+  <body style="margin: 0; padding: 0; overflow-x: hidden; font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;">
 
-    <!-- ===================================================
-         SECURITY & DIRECT URL TEST CONTROLLER
-         =================================================== -->
-    <div class="security-auditor-bar">
-      <div class="auditor-badge">
-        <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
-        <span>Security Sandbox</span>
+    <!-- FLOATING PREVIEW SWITCHER BAR -->
+    <div class="app-switcher-bar">
+      <div class="switcher-badge">
+        <i data-lucide="layers" style="width: 14px; height: 14px;"></i>
+        <span>SMM Panel</span>
       </div>
-      <button class="auditor-btn active" onclick="switchRoute('/install/')">1. /install/</button>
-      <button class="auditor-btn" onclick="testDirectAccess('/admin/')">2. /admin/ (Logged Out)</button>
-      <button class="auditor-btn" onclick="testDirectAccess('/user/')">3. /user/ (Logged Out)</button>
-      <button class="auditor-btn" onclick="switchRoute('/admin/login')">4. Admin Login</button>
-      <button class="auditor-btn" onclick="switchRoute('/login.php')">5. User Login</button>
-      <button class="auditor-btn" onclick="simulateLogin('user')">6. Authenticate User</button>
-      <button class="auditor-btn" onclick="simulateLogin('admin')">7. Authenticate Admin</button>
-      <button class="auditor-btn" style="color: #f87171;" onclick="logoutAll()">Log Out</button>
+      <button class="switcher-btn active" id="tab-landing" onclick="switchMainView('landing')">
+        🌟 Landing Page
+      </button>
+      <button class="switcher-btn" id="tab-user" onclick="switchMainView('user')">
+        👤 User Dashboard
+      </button>
+      <button class="switcher-btn" id="tab-admin" onclick="switchMainView('admin')">
+        🛡️ Admin Panel
+      </button>
+      <button class="switcher-btn" id="tab-install" onclick="switchMainView('install')">
+        ⚙️ /install/
+      </button>
+      <button class="switcher-btn" id="tab-login" onclick="switchMainView('login')">
+        🔑 User Login
+      </button>
+      <button class="switcher-btn" id="tab-admin-login" onclick="switchMainView('admin-login')">
+        🔒 Admin Login
+      </button>
     </div>
 
-    <!-- NOTIFICATION POPUP FOR SECURITY AUDIT -->
-    <div id="security-alert-modal" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999999; background: #0f172a; color: #ffffff; border: 1px solid #334155; padding: 14px 22px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); max-width: 90vw;">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <div id="security-alert-icon" style="color: #ef4444;"><i data-lucide="shield-alert"></i></div>
-        <div>
-          <div id="security-alert-title" style="font-size: 14px; font-weight: 800;">Access Denied</div>
-          <div id="security-alert-desc" style="font-size: 12px; color: #94a3b8;">Unauthenticated access blocked. Redirecting to login.</div>
-        </div>
-      </div>
+    <!-- TOAST POPUP -->
+    <div id="toast-notification" class="toast-popup" style="background: #0f172a;">
+      <i data-lucide="info" id="toast-icon"></i>
+      <span id="toast-text">Message notification</span>
     </div>
 
-    <!-- ===================================================
-         VIEW 1: WEB INSTALLER (/install/)
-         =================================================== -->
-    <div id="view-installer" style="display: block; padding: 20px 14px 80px 14px;">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <div class="brand-icon-box" style="margin: 0 auto 12px auto;">
-          <i data-lucide="layers" style="width: 24px; height: 24px;"></i>
-        </div>
-        <h1 style="font-size: 26px; font-weight: 900; letter-spacing: -0.5px;">SMM Panel Web Installer</h1>
-        <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Direct Browser-Based Setup Wizard &bull; <code>/install/index.php</code></p>
-      </div>
+    <!-- =========================================================================
+         VIEW 1: PUBLIC LANDING PAGE (MATCHES REFERENCE IMAGE EXACTLY)
+         ========================================================================= -->
+    <div id="view-landing" class="app-view-pane active">
+      <div class="landing-bg-wrap">
 
-      <!-- Locked State Card (When Lock File Active) -->
-      <div id="installer-locked-card" class="installer-step-card" style="display: none; text-align: center; padding: 48px 32px;">
-        <div style="width: 72px; height: 72px; border-radius: 50%; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto;">
-          <i data-lucide="shield-alert" style="width: 36px; height: 36px;"></i>
-        </div>
-        <h2 style="font-size: 24px; font-weight: 900; margin-bottom: 10px;">Application Already Installed</h2>
-        <p style="font-size: 14px; color: var(--text-muted); max-width: 480px; margin: 0 auto 24px auto; line-height: 1.5;">
-          The system detected <code>install/installed.lock</code>. The database and admin account are protected. Re-running the installer is blocked server-side.
-        </p>
-        <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
-          <button class="btn-primary" style="width: auto; padding: 12px 24px;" onclick="switchRoute('/login.php')">
-            Go to User Login &rarr;
-          </button>
-          <button class="btn-secondary" style="padding: 12px 24px;" onclick="switchRoute('/admin/login')">
-            <i data-lucide="shield"></i> Admin Portal
-          </button>
-        </div>
-      </div>
-
-      <!-- Active 6-Step Installation Wizard -->
-      <div id="installer-wizard-card" class="installer-step-card">
-        <!-- Progress Steps -->
-        <div class="installer-progress-bar">
-          <div class="progress-step-item active" id="prog-step-1">
-            <div class="progress-step-circle">1</div>
-            <div class="progress-step-title">System</div>
-          </div>
-          <div class="progress-step-item" id="prog-step-2">
-            <div class="progress-step-circle">2</div>
-            <div class="progress-step-title">Database</div>
-          </div>
-          <div class="progress-step-item" id="prog-step-3">
-            <div class="progress-step-circle">3</div>
-            <div class="progress-step-title">Tables</div>
-          </div>
-          <div class="progress-step-item" id="prog-step-4">
-            <div class="progress-step-circle">4</div>
-            <div class="progress-step-title">Admin</div>
-          </div>
-          <div class="progress-step-item" id="prog-step-5">
-            <div class="progress-step-circle">5</div>
-            <div class="progress-step-title">Website</div>
-          </div>
-          <div class="progress-step-item" id="prog-step-6">
-            <div class="progress-step-circle">6</div>
-            <div class="progress-step-title">Complete</div>
-          </div>
-        </div>
-
-        <div id="installer-status-box" style="display: none; margin-bottom: 20px; padding: 12px 16px; border-radius: 14px; font-size: 13px; font-weight: 700;"></div>
-
-        <!-- STEP 1: SYSTEM ENVIRONMENT CHECK -->
-        <div class="step-section-pane active" id="pane-step-1">
-          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">Step 1 — System &amp; Extensions Check</h3>
-          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
-            Validating PHP runtime and critical extension dependencies (no package installations needed).
-          </p>
-
-          <div>
-            <div class="check-row-item">
-              <span class="check-item-title"><i data-lucide="server"></i> PHP Version (&gt;= 8.0)</span>
-              <span class="badge badge-success">PHP 8.2+ Ready</span>
-            </div>
-            <div class="check-row-item">
-              <span class="check-item-title"><i data-lucide="database"></i> PDO MySQL Driver</span>
-              <span class="badge badge-success">Enabled</span>
-            </div>
-            <div class="check-row-item">
-              <span class="check-item-title"><i data-lucide="globe"></i> cURL Extension (SMM API v2)</span>
-              <span class="badge badge-success">Enabled</span>
-            </div>
-            <div class="check-row-item">
-              <span class="check-item-title"><i data-lucide="lock"></i> OpenSSL &amp; Session Support</span>
-              <span class="badge badge-success">Enabled</span>
-            </div>
-            <div class="check-row-item">
-              <span class="check-item-title"><i data-lucide="folder-check"></i> Writable Storage (config, uploads, install)</span>
-              <span class="badge badge-success">Writable</span>
-            </div>
-          </div>
-
-          <div style="margin-top: 28px; display: flex; justify-content: flex-end;">
-            <button type="button" class="btn-primary" style="width: auto; padding: 12px 28px;" onclick="goToStep(2)">
-              Continue to Database Setup &rarr;
-            </button>
-          </div>
-        </div>
-
-        <!-- STEP 2: DATABASE CONFIGURATION -->
-        <div class="step-section-pane" id="pane-step-2">
-          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">Step 2 — Database Configuration</h3>
-          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
-            Enter your MySQL / MariaDB connection parameters. Tested strictly via PDO.
-          </p>
-
-          <form onsubmit="event.preventDefault(); testDatabaseConnection();">
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px;">
-              <div>
-                <label class="form-field-label">Database Host</label>
-                <input type="text" id="inst-db-host" value="localhost" required style="width: 100%;">
+        <!-- 1. Header & Navigation -->
+        <header>
+          <div class="landing-nav-container">
+            <a href="#" class="landing-logo" onclick="event.preventDefault(); switchMainView('landing');">
+              <div class="landing-logo-icon">
+                <i data-lucide="bar-chart-2" style="width: 24px; height: 24px;"></i>
               </div>
               <div>
-                <label class="form-field-label">Port</label>
-                <input type="text" id="inst-db-port" value="3306" required style="width: 100%;">
+                <div class="landing-logo-text" id="live-site-name">SMM Panel</div>
+                <div class="landing-logo-sub" id="live-site-tagline">Grow Your Social Media</div>
               </div>
+            </a>
+
+            <nav class="landing-nav-pills">
+              <a href="#" class="landing-nav-link active" onclick="event.preventDefault();">Home</a>
+              <a href="#services-sec" class="landing-nav-link">Services</a>
+              <a href="#platforms-sec" class="landing-nav-link">How It Works</a>
+              <a href="#" class="landing-nav-link" onclick="event.preventDefault(); switchMainView('login');">Support</a>
+            </nav>
+
+            <div class="landing-auth-btns">
+              <button class="landing-btn-login" onclick="switchMainView('login')">Login</button>
+              <button class="landing-btn-register" onclick="switchMainView('login', 'register')">Register</button>
             </div>
-
-            <div class="form-field-group">
-              <label class="form-field-label">Database Name</label>
-              <input type="text" id="inst-db-name" value="smm_panel" required style="width: 100%;">
-            </div>
-
-            <div class="form-field-group">
-              <label class="form-field-label">Database Username</label>
-              <input type="text" id="inst-db-user" value="root" required style="width: 100%;">
-            </div>
-
-            <div class="form-field-group">
-              <label class="form-field-label">Database Password</label>
-              <input type="password" id="inst-db-pass" placeholder="••••••••" style="width: 100%;">
-            </div>
-
-            <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center;">
-              <button type="button" class="btn-secondary" onclick="goToStep(1)">&larr; Back</button>
-              <button type="submit" id="btn-inst-test-db" class="btn-primary" style="width: auto; padding: 12px 28px;">
-                Test Connection &rarr;
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <!-- STEP 3: CREATE DATABASE TABLES -->
-        <div class="step-section-pane" id="pane-step-3">
-          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">Step 3 — Create Database Tables</h3>
-          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
-            Executes <code>database/schema.sql</code> to create all 13 tables with constraints.
-          </p>
-
-          <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 18px; padding: 20px; margin-bottom: 24px;">
-            <div style="font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 10px;">Database Objects to Create:</div>
-            <ul style="font-size: 13px; color: var(--text-muted); line-height: 1.8; margin-left: 20px;">
-              <li><code>users</code>, <code>admins</code> (Password hashing &amp; role security)</li>
-              <li><code>providers</code>, <code>provider_services</code> (API integration &amp; sync)</li>
-              <li><code>categories</code>, <code>services</code> (SMM pricing &amp; minimum/maximum limits)</li>
-              <li><code>orders</code>, <code>payments</code>, <code>transactions</code> (Ledger tracking)</li>
-              <li><code>tickets</code>, <code>ticket_messages</code>, <code>announcements</code>, <code>settings</code></li>
-            </ul>
-          </div>
-
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <button type="button" class="btn-secondary" onclick="goToStep(2)">&larr; Back</button>
-            <button type="button" id="btn-inst-migrate" class="btn-primary" style="width: auto; padding: 12px 28px;" onclick="runMigrationStep()">
-              Run Database Migration &rarr;
-            </button>
-          </div>
-        </div>
-
-        <!-- STEP 4: CREATE ADMIN ACCOUNT -->
-        <div class="step-section-pane" id="pane-step-4">
-          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">Step 4 — Create Admin Account</h3>
-          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
-            Initialize the primary Super Administrator. Hashes password via <code>password_hash()</code>.
-          </p>
-
-          <form onsubmit="event.preventDefault(); submitAdminStep();">
-            <div class="form-field-group">
-              <label class="form-field-label">Administrator Name</label>
-              <input type="text" id="inst-admin-name" value="Super Admin" required style="width: 100%;">
-            </div>
-
-            <div class="form-field-group">
-              <label class="form-field-label">Admin Email / Username</label>
-              <input type="email" id="inst-admin-email" value="admin@smmpanel.com" required style="width: 100%;">
-            </div>
-
-            <div class="form-field-group">
-              <label class="form-field-label">Admin Password (min 8 chars)</label>
-              <input type="password" id="inst-admin-pass" value="AdminPass2025!" required style="width: 100%;">
-            </div>
-
-            <div class="form-field-group">
-              <label class="form-field-label">Confirm Password</label>
-              <input type="password" id="inst-admin-confirm" value="AdminPass2025!" required style="width: 100%;">
-            </div>
-
-            <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center;">
-              <button type="button" class="btn-secondary" onclick="goToStep(3)">&larr; Back</button>
-              <button type="submit" id="btn-inst-admin" class="btn-primary" style="width: auto; padding: 12px 28px;">
-                Create Admin Account &rarr;
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <!-- STEP 5: WEBSITE CONFIGURATION -->
-        <div class="step-section-pane" id="pane-step-5">
-          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">Step 5 — Website Configuration</h3>
-          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
-            Set your brand identity, domain URL, and currency configuration.
-          </p>
-
-          <form onsubmit="event.preventDefault(); submitSiteConfigStep();">
-            <div class="form-field-group">
-              <label class="form-field-label">Website Name</label>
-              <input type="text" id="inst-site-name" value="SMM Panel" required style="width: 100%;">
-            </div>
-
-            <div class="form-field-group">
-              <label class="form-field-label">Website Tagline</label>
-              <input type="text" id="inst-site-tagline" value="Grow Your Social Media" required style="width: 100%;">
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
-              <div>
-                <label class="form-field-label">Currency Symbol</label>
-                <input type="text" id="inst-curr-sym" value="₹" required style="width: 100%;">
-              </div>
-              <div>
-                <label class="form-field-label">Currency Code</label>
-                <input type="text" id="inst-curr-code" value="INR" required style="width: 100%;">
-              </div>
-            </div>
-
-            <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center;">
-              <button type="button" class="btn-secondary" onclick="goToStep(4)">&larr; Back</button>
-              <button type="submit" id="btn-inst-site" class="btn-primary" style="width: auto; padding: 12px 28px;">
-                Save &amp; Generate Lock &rarr;
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <!-- STEP 6: INSTALLATION COMPLETE -->
-        <div class="step-section-pane" id="pane-step-6">
-          <div style="text-align: center; padding: 24px 10px;">
-            <div style="width: 72px; height: 72px; border-radius: 50%; background: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px auto;">
-              <i data-lucide="check-circle" style="width: 36px; height: 36px;"></i>
-            </div>
-
-            <h2 style="font-size: 24px; font-weight: 900; margin-bottom: 8px;">Installation Completed Successfully!</h2>
-            <p style="font-size: 14px; color: var(--text-muted); max-width: 480px; margin: 0 auto 28px auto;">
-              Database migrated, Super Admin created, and <code>install/installed.lock</code> generated. The installer is now permanently locked.
-            </p>
-
-            <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
-              <button class="btn-primary" style="width: auto; padding: 12px 28px;" onclick="switchRoute('/login.php')">
-                Go to Website &rarr;
-              </button>
-              <button class="btn-secondary" style="padding: 12px 28px;" onclick="switchRoute('/admin/login')">
-                <i data-lucide="shield"></i> Go to Admin Login
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===================================================
-         VIEW 2: USER LOGIN SCREEN (/login.php)
-         =================================================== -->
-    <div id="view-user-login" style="display: none; padding: 40px 14px 90px 14px;">
-      <div class="auth-split-wrapper">
-        <div class="auth-dual-card">
-
-          <!-- Left Hero Side (Image 1) -->
-          <div class="auth-hero-side">
-            <div class="brand-badge">
-              <div class="brand-icon-box" style="background: rgba(255,255,255,0.2); backdrop-filter: blur(8px);">
-                <i data-lucide="bar-chart-2" style="color: #ffffff;"></i>
-              </div>
-              <div>
-                <div class="brand-title" style="color: #ffffff;">SMM Panel</div>
-                <div class="brand-subtitle" style="color: rgba(255,255,255,0.8);">Grow Your Social Media</div>
-              </div>
-            </div>
-
-            <div>
-              <h2 class="auth-hero-headline">
-                More Followers<br>
-                More Engagement<br>
-                More Success
-              </h2>
-
-              <div class="social-icons-cloud">
-                <div class="floating-social-bubble"><i data-lucide="instagram"></i></div>
-                <div class="floating-social-bubble"><i data-lucide="youtube"></i></div>
-                <div class="floating-social-bubble"><i data-lucide="send"></i></div>
-                <div class="floating-social-bubble"><i data-lucide="video"></i></div>
-                <div class="floating-social-bubble"><i data-lucide="facebook"></i></div>
-                <div class="floating-social-bubble"><i data-lucide="twitter"></i></div>
-              </div>
-            </div>
-
-            <div style="font-size: 12px; color: rgba(255,255,255,0.7); display: flex; justify-content: space-between;">
-              <span>&copy; 2025 SMM Panel.</span>
-              <a href="#" onclick="switchRoute('/admin/login')" style="color: #fff; text-decoration: underline; font-weight: 700;">Admin Portal</a>
-            </div>
-          </div>
-
-          <!-- Right Form Side (Image 1) -->
-          <div class="auth-form-side">
-            <div class="auth-tab-switch">
-              <button class="auth-switch-btn active" id="user-tab-login" onclick="setUserAuthTab('login')">Login</button>
-              <button class="auth-switch-btn" id="user-tab-reg" onclick="setUserAuthTab('register')">Register</button>
-            </div>
-
-            <div style="margin-bottom: 24px;">
-              <h3 id="user-auth-head" style="font-size: 24px; font-weight: 900; color: #0f172a; margin-bottom: 6px;">Welcome Back!</h3>
-              <p id="user-auth-desc" style="font-size: 13px; color: var(--text-muted);">Sign in to your account to continue.</p>
-            </div>
-
-            <div id="user-login-error" style="display: none; background: #fee2e2; border: 1px solid #f87171; color: #b91c1c; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; margin-bottom: 18px;"></div>
-
-            <form onsubmit="event.preventDefault(); submitUserLoginForm();">
-              <div class="form-field-group">
-                <div class="form-input-with-icon">
-                  <i data-lucide="mail" class="input-icon-left"></i>
-                  <input type="email" id="input-user-email" placeholder="Email Address" value="aarisali@gmail.com" required>
-                </div>
-              </div>
-
-              <div class="form-field-group">
-                <div class="form-input-with-icon">
-                  <i data-lucide="lock" class="input-icon-left"></i>
-                  <input type="password" id="input-user-pass" placeholder="Password" value="UserSecret2025!" required>
-                  <i data-lucide="eye" class="input-icon-right" onclick="togglePass('input-user-pass')"></i>
-                </div>
-              </div>
-
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; font-size: 13px;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #334155;">
-                  <input type="checkbox" checked style="width: 16px; height: 16px;">
-                  <span>Remember Me</span>
-                </label>
-                <a href="#" style="color: var(--primary-blue); font-weight: 600;" onclick="showToast('Password recovery sent to email', 'info')">Forgot Password?</a>
-              </div>
-
-              <button type="submit" id="btn-user-submit-login" class="btn-primary" style="margin-bottom: 20px;">
-                Login &rarr;
-              </button>
-
-              <div style="text-align: center; margin-bottom: 18px; font-size: 12px; color: var(--text-light); font-weight: 600;">
-                Or continue with
-              </div>
-
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
-                <button type="button" class="btn-secondary" onclick="showToast('OAuth requires configured client ID', 'warning')" style="padding: 10px;">
-                  <i data-lucide="globe" style="width: 16px; height: 16px; color: #ea4335;"></i> Google
-                </button>
-                <button type="button" class="btn-secondary" onclick="showToast('Telegram OAuth widget initialized', 'warning')" style="padding: 10px;">
-                  <i data-lucide="send" style="width: 16px; height: 16px; color: #0284c7;"></i> Telegram
-                </button>
-              </div>
-
-              <div style="text-align: center; font-size: 13px; color: var(--text-muted);">
-                Don't have an account? <a href="#" style="font-weight: 700; color: var(--primary-blue);" onclick="setUserAuthTab('register')">Register</a>
-              </div>
-            </form>
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-    <!-- ===================================================
-         VIEW 3: ADMIN LOGIN PORTAL (/admin/index.php)
-         =================================================== -->
-    <div id="view-admin-login" style="display: none; padding: 40px 14px 90px 14px;">
-      <div class="data-table-card" style="width: 100%; max-width: 440px; margin: 40px auto; padding: 36px;">
-        <div style="text-align: center; margin-bottom: 28px;">
-          <div class="brand-icon-box" style="margin: 0 auto 14px auto; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
-            <i data-lucide="shield-alert" style="color: #ffffff;"></i>
-          </div>
-          <h2 style="font-size: 22px; font-weight: 900;">Admin Control Panel</h2>
-          <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Authorized Administrative Access Only</p>
-        </div>
-
-        <div id="admin-login-error" style="display: none; background: #fee2e2; border: 1px solid #f87171; color: #b91c1c; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; margin-bottom: 18px;"></div>
-
-        <form onsubmit="event.preventDefault(); submitAdminLoginForm();">
-          <div class="form-field-group">
-            <label class="form-field-label">Admin Email / Username</label>
-            <div class="form-input-with-icon">
-              <i data-lucide="user-check" class="input-icon-left"></i>
-              <input type="text" id="input-admin-email" value="admin@smmpanel.com" placeholder="admin@domain.com" required style="width: 100%;">
-            </div>
-          </div>
-
-          <div class="form-field-group">
-            <label class="form-field-label">Admin Password</label>
-            <div class="form-input-with-icon">
-              <i data-lucide="lock" class="input-icon-left"></i>
-              <input type="password" id="input-admin-pass" value="AdminPass2025!" placeholder="Password" required style="width: 100%;">
-              <i data-lucide="eye" class="input-icon-right" onclick="togglePass('input-admin-pass')"></i>
-            </div>
-          </div>
-
-          <button type="submit" id="btn-admin-submit-login" class="btn-primary" style="margin-bottom: 16px;">
-            Sign In as Administrator &rarr;
-          </button>
-
-          <div style="text-align: center; font-size: 13px;">
-            <a href="#" onclick="switchRoute('/login.php')" style="color: var(--text-muted); font-weight: 600;">Switch to Customer Login</a>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- ===================================================
-         VIEW 4: PROTECTED USER DASHBOARD (/user/)
-         =================================================== -->
-    <div id="view-user-dashboard" style="display: none; padding-bottom: 90px;">
-      <div class="app-container">
-
-        <!-- Header -->
-        <header class="app-header">
-          <div class="brand-badge">
-            <div class="brand-icon-box"><i data-lucide="bar-chart-2"></i></div>
-            <div>
-              <div class="brand-title">SMM Panel</div>
-              <div class="brand-subtitle">Grow Your Social Media</div>
-            </div>
-          </div>
-          <div class="header-actions">
-            <button class="icon-btn" onclick="expandCardToPage(this, 'page-notifications')"><i data-lucide="bell"></i><span class="icon-badge-dot"></span></button>
-            <button class="icon-btn" onclick="expandCardToPage(this, 'page-tickets')"><i data-lucide="message-square"></i></button>
-            <button class="user-avatar-btn" onclick="expandCardToPage(this, 'page-profile')"><span>AA</span></button>
-            <button class="btn-secondary" style="color: #ef4444; padding: 8px 12px;" onclick="logoutAll()"><i data-lucide="log-out"></i></button>
           </div>
         </header>
 
-        <!-- User Welcome Bar (Aaris Ali, #1024, Balance ₹850.50) -->
+        <!-- 2. Hero Section -->
+        <section class="landing-hero">
+          <div class="landing-growth-badge">
+            <i data-lucide="rocket" style="width: 14px; height: 14px;"></i>
+            SOCIAL MEDIA GROWTH
+          </div>
+
+          <h1 class="landing-headline-main">Boost Your Social Media</h1>
+          <span class="landing-headline-cursive">With Our SMM Panel</span>
+
+          <p class="landing-hero-desc">
+            Get real followers, likes, views and more. Fast, secure and affordable services for all major social media platforms.
+          </p>
+
+          <div class="landing-feature-row">
+            <div class="landing-feature-pill">
+              <i data-lucide="zap" style="color: #2563eb; width: 16px; height: 16px;"></i>
+              <span>Fast Delivery</span>
+            </div>
+            <div class="landing-feature-pill">
+              <i data-lucide="shield-check" style="color: #2563eb; width: 16px; height: 16px;"></i>
+              <span>100% Safe</span>
+            </div>
+            <div class="landing-feature-pill">
+              <i data-lucide="star" style="color: #2563eb; width: 16px; height: 16px;"></i>
+              <span>High Quality</span>
+            </div>
+            <div class="landing-feature-pill">
+              <i data-lucide="headphones" style="color: #2563eb; width: 16px; height: 16px;"></i>
+              <span>24/7 Support</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. 3D Card Carousel (Matches Reference Image) -->
+        <section class="landing-carousel-section" id="services-sec">
+          <div class="swiper landing-3d-swiper-preview">
+            <div class="swiper-wrapper">
+
+              <!-- Card 1: YouTube Views (Left Card in reference image) -->
+              <div class="swiper-slide landing-card-slide" id="landing-slide-yt">
+                <div class="landing-card-banner" style="background: radial-gradient(circle at 50% 50%, #ff4b4b 0%, #dc2626 100%);">
+                  <span class="landing-tag-frosted">YouTube</span>
+                  <div style="width: 90px; height: 90px; border-radius: 26px; background: rgba(255,255,255,0.22); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px rgba(0,0,0,0.2); border: 2px solid rgba(255,255,255,0.35);">
+                    <i data-lucide="youtube" style="width: 48px; height: 48px; color: #ffffff;"></i>
+                  </div>
+                </div>
+                <div class="landing-card-body">
+                  <div class="landing-card-title">YouTube Views</div>
+                  <div class="landing-card-subtitle">Real Views &bull; High Retention</div>
+                  <div class="landing-price-bar">
+                    <div class="landing-price-val"><span class="curr-sym">₹</span>12 <span>/ 1K</span></div>
+                    <span class="badge badge-success" style="padding: 6px 12px; font-size: 11px;">
+                      <i data-lucide="zap" style="width: 12px; height: 12px; margin-right: 4px;"></i> Fast Delivery
+                    </span>
+                  </div>
+                  <button class="landing-order-btn" onclick="zoomCardToTarget(this, 'user', 'new-order')">
+                    <i data-lucide="shopping-cart"></i> Order Now &rarr;
+                  </button>
+                </div>
+              </div>
+
+              <!-- Card 2: Instagram Followers (Active Center Card in reference image) -->
+              <div class="swiper-slide landing-card-slide" id="landing-slide-ig">
+                <div class="landing-card-banner" style="background: radial-gradient(circle at 30% 30%, #f58529 0%, #dd2a7b 50%, #8134af 100%);">
+                  <span class="landing-tag-frosted">Instagram</span>
+                  <div style="position: relative; display: flex; align-items: center; justify-content: center;">
+                    <div style="width: 100px; height: 100px; border-radius: 30px; background: rgba(255,255,255,0.25); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; box-shadow: 0 16px 32px rgba(0,0,0,0.25); border: 2px solid rgba(255,255,255,0.45);">
+                      <i data-lucide="instagram" style="width: 54px; height: 54px; color: #ffffff;"></i>
+                    </div>
+                    <div style="position: absolute; top: -10px; right: -22px; background: #ffffff; color: #e11d48; padding: 6px 10px; border-radius: 9999px; box-shadow: 0 6px 16px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 4px; font-weight: 900; font-size: 11px;">
+                      <i data-lucide="heart" style="width: 12px; height: 12px; fill: #e11d48;"></i>
+                    </div>
+                    <div style="position: absolute; bottom: -12px; right: -15px; background: #6366f1; color: #ffffff; padding: 5px 12px; border-radius: 9999px; font-weight: 900; font-size: 12px; box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);">
+                      +1K
+                    </div>
+                  </div>
+                </div>
+                <div class="landing-card-body">
+                  <div class="landing-card-title">Instagram Followers</div>
+                  <div class="landing-card-subtitle">Real &amp; Active Followers &bull; High Quality &bull; Fast Delivery</div>
+                  <div class="landing-price-bar">
+                    <div class="landing-price-val"><span class="curr-sym">₹</span>35 <span>/ 1K</span></div>
+                    <span class="badge badge-success" style="padding: 6px 12px; font-size: 11px;">
+                      <i data-lucide="zap" style="width: 12px; height: 12px; margin-right: 4px;"></i> Starts in 1-2 Hours
+                    </span>
+                  </div>
+                  <button class="landing-order-btn" onclick="zoomCardToTarget(this, 'user', 'new-order')">
+                    <i data-lucide="shopping-cart"></i> Order Now &rarr;
+                  </button>
+                </div>
+              </div>
+
+              <!-- Card 3: Telegram Members (Right Card in reference image) -->
+              <div class="swiper-slide landing-card-slide" id="landing-slide-tg">
+                <div class="landing-card-banner" style="background: radial-gradient(circle at 50% 50%, #38bdf8 0%, #0284c7 100%);">
+                  <span class="landing-tag-frosted">Telegram</span>
+                  <div style="width: 90px; height: 90px; border-radius: 26px; background: rgba(255,255,255,0.22); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px rgba(0,0,0,0.2); border: 2px solid rgba(255,255,255,0.35);">
+                    <i data-lucide="send" style="width: 44px; height: 44px; color: #ffffff;"></i>
+                  </div>
+                </div>
+                <div class="landing-card-body">
+                  <div class="landing-card-title">Telegram Members</div>
+                  <div class="landing-card-subtitle">Real &amp; Active Members &bull; Instant Start</div>
+                  <div class="landing-price-bar">
+                    <div class="landing-price-val"><span class="curr-sym">₹</span>45 <span>/ 1K</span></div>
+                    <span class="badge badge-success" style="padding: 6px 12px; font-size: 11px;">
+                      <i data-lucide="zap" style="width: 12px; height: 12px; margin-right: 4px;"></i> Fast Delivery
+                    </span>
+                  </div>
+                  <button class="landing-order-btn" onclick="zoomCardToTarget(this, 'user', 'new-order')">
+                    <i data-lucide="shopping-cart"></i> Order Now &rarr;
+                  </button>
+                </div>
+              </div>
+
+              <!-- Card 4: TikTok Likes -->
+              <div class="swiper-slide landing-card-slide">
+                <div class="landing-card-banner" style="background: radial-gradient(circle at 50% 50%, #1e293b 0%, #000000 100%);">
+                  <span class="landing-tag-frosted">TikTok</span>
+                  <div style="width: 90px; height: 90px; border-radius: 26px; background: rgba(255,255,255,0.15); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.25);">
+                    <i data-lucide="music" style="width: 44px; height: 44px; color: #22d3ee;"></i>
+                  </div>
+                </div>
+                <div class="landing-card-body">
+                  <div class="landing-card-title">TikTok Likes &amp; Views</div>
+                  <div class="landing-card-subtitle">Instant For-You Reach &bull; Viral Boost</div>
+                  <div class="landing-price-bar">
+                    <div class="landing-price-val"><span class="curr-sym">₹</span>25 <span>/ 1K</span></div>
+                    <span class="badge badge-success" style="padding: 6px 12px; font-size: 11px;">
+                      <i data-lucide="zap" style="width: 12px; height: 12px; margin-right: 4px;"></i> Instant Start
+                    </span>
+                  </div>
+                  <button class="landing-order-btn" onclick="zoomCardToTarget(this, 'user', 'new-order')">
+                    <i data-lucide="shopping-cart"></i> Order Now &rarr;
+                  </button>
+                </div>
+              </div>
+
+              <!-- Card 5: Twitter (X) Retweets -->
+              <div class="swiper-slide landing-card-slide">
+                <div class="landing-card-banner" style="background: radial-gradient(circle at 50% 50%, #334155 0%, #0f172a 100%);">
+                  <span class="landing-tag-frosted">Twitter (X)</span>
+                  <div style="width: 90px; height: 90px; border-radius: 26px; background: rgba(255,255,255,0.18); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px rgba(0,0,0,0.25); border: 2px solid rgba(255,255,255,0.3);">
+                    <i data-lucide="twitter" style="width: 44px; height: 44px; color: #ffffff;"></i>
+                  </div>
+                </div>
+                <div class="landing-card-body">
+                  <div class="landing-card-title">Twitter (X) Retweets</div>
+                  <div class="landing-card-subtitle">Worldwide Engagement &bull; Real Retweets</div>
+                  <div class="landing-price-bar">
+                    <div class="landing-price-val"><span class="curr-sym">₹</span>40 <span>/ 1K</span></div>
+                    <span class="badge badge-success" style="padding: 6px 12px; font-size: 11px;">
+                      <i data-lucide="zap" style="width: 12px; height: 12px; margin-right: 4px;"></i> Fast Delivery
+                    </span>
+                  </div>
+                  <button class="landing-order-btn" onclick="zoomCardToTarget(this, 'user', 'new-order')">
+                    <i data-lucide="shopping-cart"></i> Order Now &rarr;
+                  </button>
+                </div>
+              </div>
+
+            </div>
+            <div class="swiper-pagination landing-swiper-pagination" style="margin-top: 24px;"></div>
+          </div>
+        </section>
+
+        <!-- 4. Supported Platforms Section (Matches Reference Image) -->
+        <section class="landing-platforms-section" id="platforms-sec">
+          <div class="landing-growth-badge" style="margin-bottom: 8px;">
+            Supported Platforms
+          </div>
+          <h2 style="font-size: 26px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px;">All Major Social Media Platforms</h2>
+
+          <div class="landing-platforms-grid">
+            <div class="platform-card" onclick="switchMainView('login', 'register')">
+              <div class="platform-icon-box" style="background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);">
+                <i data-lucide="instagram"></i>
+              </div>
+              <div class="platform-name">Instagram</div>
+            </div>
+
+            <div class="platform-card" onclick="switchMainView('login', 'register')">
+              <div class="platform-icon-box" style="background: #ff0000;">
+                <i data-lucide="youtube"></i>
+              </div>
+              <div class="platform-name">YouTube</div>
+            </div>
+
+            <div class="platform-card" onclick="switchMainView('login', 'register')">
+              <div class="platform-icon-box" style="background: #0088cc;">
+                <i data-lucide="send"></i>
+              </div>
+              <div class="platform-name">Telegram</div>
+            </div>
+
+            <div class="platform-card" onclick="switchMainView('login', 'register')">
+              <div class="platform-icon-box" style="background: #1877f2;">
+                <i data-lucide="facebook"></i>
+              </div>
+              <div class="platform-name">Facebook</div>
+            </div>
+
+            <div class="platform-card" onclick="switchMainView('login', 'register')">
+              <div class="platform-icon-box" style="background: #000000;">
+                <i data-lucide="music"></i>
+              </div>
+              <div class="platform-name">TikTok</div>
+            </div>
+
+            <div class="platform-card" onclick="switchMainView('login', 'register')">
+              <div class="platform-icon-box" style="background: #0f172a;">
+                <i data-lucide="twitter"></i>
+              </div>
+              <div class="platform-name">Twitter (X)</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. Bottom Decorative Accents (Matches Reference Image) -->
+        <section class="landing-bottom-strip">
+          <div class="bottom-followers-badge">
+            <i data-lucide="heart" style="width: 18px; height: 18px; fill: #ffffff;"></i>
+            <span>+10K</span>
+          </div>
+
+          <div class="bottom-script-text">
+            Grow Faster, Smarter!
+          </div>
+
+          <div class="bottom-chart-graphic">
+            <div class="chart-bar" style="height: 18px;"></div>
+            <div class="chart-bar" style="height: 28px;"></div>
+            <div class="chart-bar" style="height: 38px;"></div>
+            <div class="chart-bar" style="height: 48px; background: #1d4ed8;"></div>
+            <i data-lucide="trending-up" style="color: #2563eb; width: 28px; height: 28px; margin-left: 6px; margin-bottom: 24px;"></i>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         VIEW 2: USER DASHBOARD (WITH VERIFIED 0.00 START BALANCE & NOTIFICATIONS)
+         ========================================================================= -->
+    <div id="view-user" class="app-view-pane">
+      <div class="app-container" style="padding-bottom: 90px;">
+        <!-- Top App Header -->
+        <header class="app-header">
+          <div class="brand-badge">
+            <div class="brand-icon-box">
+              <i data-lucide="bar-chart-2"></i>
+            </div>
+            <div>
+              <div class="brand-title live-app-title">SMM Panel</div>
+              <div class="brand-subtitle live-app-tagline">Grow Your Social Media</div>
+            </div>
+          </div>
+
+          <div class="header-actions">
+            <button class="icon-btn" onclick="openUserModal('modal-notifications')" title="Notifications">
+              <i data-lucide="bell"></i>
+              <span class="icon-badge-dot" id="user-notif-badge" style="display: none;"></span>
+            </button>
+            <button class="icon-btn" onclick="openUserModal('modal-tickets')" title="Tickets">
+              <i data-lucide="message-square"></i>
+            </button>
+            <button class="user-avatar-btn" title="Profile">
+              <span id="user-avatar-initials">AA</span>
+            </button>
+            <button class="icon-btn" onclick="switchMainView('landing')" title="Sign Out" style="color: #ef4444;">
+              <i data-lucide="log-out"></i>
+            </button>
+          </div>
+        </header>
+
+        <!-- User Welcome Bar (BUG 1 FIX: Clean 0.00 / real balance, no 2621450) -->
         <div class="user-welcome-bar">
           <div class="welcome-user-info">
-            <div class="welcome-avatar"><i data-lucide="user"></i></div>
+            <div class="welcome-avatar">
+              <i data-lucide="user"></i>
+            </div>
             <div>
               <div class="welcome-user-title">Welcome back,</div>
-              <div class="welcome-user-name">Aaris Ali</div>
-              <div class="welcome-user-id">User ID: #1024 &bull; <span style="color: #10b981; font-weight: 700;">Verified Session</span></div>
+              <div class="welcome-user-name" id="user-display-name">Aaris Ali</div>
+              <div class="welcome-user-id" id="user-display-id">User ID: #1024</div>
             </div>
           </div>
 
           <div class="balance-pill-card">
             <div>
               <div class="balance-label">Your Balance</div>
-              <div class="balance-value live-user-balance" id="header-balance-display">₹850.50</div>
+              <div class="balance-value live-user-balance" id="header-user-bal">
+                <span class="curr-sym">₹</span><span id="user-balance-amount">0.00</span>
+              </div>
             </div>
-            <button class="add-funds-pill-btn" onclick="expandCardToPage(this, 'page-add-funds')">
+            <button class="add-funds-pill-btn" onclick="openUserModal('modal-add-funds')">
               <i data-lucide="plus"></i> Add Funds
             </button>
           </div>
         </div>
 
-        <!-- 3D Card Carousel -->
-        <section class="carousel-hub-section">
-          <div class="swiper swiper-3d-hub">
-            <div class="swiper-wrapper">
-              <div class="swiper-slide">
-                <div class="hub-card card-theme-emerald" data-target-page="page-add-funds">
-                  <div class="hub-card-icon-wrap"><i data-lucide="wallet"></i></div>
-                  <div>
-                    <h2 class="hub-card-title">Add Funds</h2>
-                    <p class="hub-card-desc">Top up your wallet with instant payment</p>
-                  </div>
-                  <button class="hub-card-btn">Open &rarr;</button>
-                </div>
+        <!-- User Quick Actions & Orders Section -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 24px;">
+          <!-- Left: Place Order Form Card -->
+          <div class="data-table-card" style="padding: 24px;">
+            <h3 style="font-size: 18px; font-weight: 800; margin-top: 0; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="zap" style="color: #2563eb;"></i> Place New Order
+            </h3>
+
+            <form onsubmit="event.preventDefault(); submitLiveOrder();">
+              <div style="margin-bottom: 14px;">
+                <label class="form-field-label">Service Package</label>
+                <select id="user-order-service" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border-light);" onchange="updateLivePrice()">
+                  <option value="35.00" data-name="Instagram Followers - HQ Real">Instagram Followers (Rate: <span class="curr-sym">₹</span>35 / 1K)</option>
+                  <option value="12.00" data-name="YouTube Views - High Retention">YouTube Views (Rate: <span class="curr-sym">₹</span>12 / 1K)</option>
+                  <option value="45.00" data-name="Telegram Members - Instant">Telegram Members (Rate: <span class="curr-sym">₹</span>45 / 1K)</option>
+                  <option value="25.00" data-name="TikTok Likes & Shares">TikTok Likes (Rate: <span class="curr-sym">₹</span>25 / 1K)</option>
+                </select>
               </div>
 
-              <div class="swiper-slide">
-                <div class="hub-card card-theme-blue" data-target-page="page-new-order">
-                  <div class="hub-card-icon-wrap"><i data-lucide="zap"></i></div>
-                  <div>
-                    <h2 class="hub-card-title">New Order</h2>
-                    <p class="hub-card-desc">Place a new order for your social media</p>
-                  </div>
-                  <button class="hub-card-btn">Open &rarr;</button>
-                </div>
+              <div style="margin-bottom: 14px;">
+                <label class="form-field-label">Target Link</label>
+                <input type="url" id="user-order-link" placeholder="https://instagram.com/p/yourprofile" required style="width: 100%;">
               </div>
 
-              <div class="swiper-slide">
-                <div class="hub-card card-theme-amber" data-target-page="page-my-orders">
-                  <div class="hub-card-icon-wrap"><i data-lucide="package"></i></div>
-                  <div>
-                    <h2 class="hub-card-title">My Orders</h2>
-                    <p class="hub-card-desc">Track and monitor your live order progress</p>
-                  </div>
-                  <button class="hub-card-btn">Open &rarr;</button>
-                </div>
+              <div style="margin-bottom: 18px;">
+                <label class="form-field-label">Quantity</label>
+                <input type="number" id="user-order-qty" value="1000" min="100" max="100000" required style="width: 100%;" oninput="updateLivePrice()">
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: #f8fafc; padding: 12px 16px; border-radius: 14px;">
+                <span style="font-size: 13px; font-weight: 700; color: #475569;">Total Charge:</span>
+                <span style="font-size: 20px; font-weight: 900; color: #2563eb;"><span class="curr-sym">₹</span><span id="user-order-total-price">35.00</span></span>
+              </div>
+
+              <button type="submit" class="btn-primary">
+                Place Order &rarr;
+              </button>
+            </form>
+          </div>
+
+          <!-- Right: Notifications & Quick Wallet Top-up -->
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="data-table-card" style="padding: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <h4 style="margin: 0; font-size: 15px; font-weight: 800;">Recent Alerts</h4>
+                <button class="notif-action-btn" onclick="markAllNotificationsRead()">Mark all read</button>
+              </div>
+              <div id="user-mini-notifs-list" style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Populated dynamically -->
               </div>
             </div>
-            <div class="hub-carousel-pagination"></div>
-          </div>
-        </section>
 
-        <!-- EXACTLY 4 QUICK ACTIONS -->
-        <section class="quick-actions-container">
-          <div class="quick-actions-grid">
-            <div class="quick-action-item" data-target-page="page-all-services">
-              <div class="action-icon-circle action-icon-services"><i data-lucide="layers"></i></div>
-              <div><div class="action-meta-title">Services</div><div class="action-meta-desc">Browse all services</div></div>
-            </div>
-            <div class="quick-action-item" data-target-page="page-transactions">
-              <div class="action-icon-circle action-icon-transactions"><i data-lucide="receipt"></i></div>
-              <div><div class="action-meta-title">Transactions</div><div class="action-meta-desc">Wallet & history</div></div>
-            </div>
-            <div class="quick-action-item" data-target-page="page-tickets">
-              <div class="action-icon-circle action-icon-support"><i data-lucide="life-buoy"></i></div>
-              <div><div class="action-meta-title">Support</div><div class="action-meta-desc">Get instant help</div></div>
-            </div>
-            <div class="quick-action-item" data-target-page="page-profile">
-              <div class="action-icon-circle action-icon-profile"><i data-lucide="user-check"></i></div>
-              <div><div class="action-meta-title">Profile</div><div class="action-meta-desc">Account settings</div></div>
-            </div>
-          </div>
-        </section>
-
-        <!-- SEPARATE SECOND SECTION (4 OPTIONS) -->
-        <section class="quick-access-section">
-          <div class="quick-access-dock">
-            <button class="dock-item-btn active" data-target="home"><i data-lucide="home"></i><span>Home</span></button>
-            <button class="dock-item-btn" data-target="page-my-orders"><i data-lucide="shopping-bag"></i><span>Orders</span></button>
-            <button class="dock-item-btn" data-target="page-add-funds"><i data-lucide="wallet"></i><span>Wallet</span></button>
-            <button class="dock-item-btn" data-target="page-profile"><i data-lucide="user"></i><span>Profile</span></button>
-          </div>
-        </section>
-
-        <!-- GSAP EXPANDED PAGES -->
-        <div id="page-new-order" class="page-view-container">
-          <div class="page-back-header">
-            <button class="back-btn-link"><span class="back-icon-circle"><i data-lucide="arrow-left"></i></span><span>New Order</span></button>
-          </div>
-          <div class="order-step-indicator">
-            <div class="step-item active"><span class="step-number-circle">1</span><span>Select Service</span></div>
-            <div class="step-item active"><span class="step-number-circle">2</span><span>Contact Info</span></div>
-            <div class="step-item"><span class="step-number-circle">3</span><span>Payment</span></div>
-          </div>
-          <div class="order-layout-grid">
-            <div class="category-sidebar-list">
-              <button class="category-tab-btn active" data-category="instagram"><i data-lucide="instagram"></i> Instagram</button>
-              <button class="category-tab-btn" data-category="youtube"><i data-lucide="youtube"></i> YouTube</button>
-              <button class="category-tab-btn" data-category="telegram"><i data-lucide="send"></i> Telegram</button>
-              <button class="category-tab-btn" data-category="facebook"><i data-lucide="facebook"></i> Facebook</button>
-              <button class="category-tab-btn" data-category="tiktok"><i data-lucide="video"></i> TikTok</button>
-              <button class="category-tab-btn" data-category="twitter"><i data-lucide="twitter"></i> Twitter (X)</button>
-            </div>
-            <div>
-              <div class="service-list-header">
-                <div class="brand-icon-box" style="width: 36px; height: 36px; border-radius: 10px;"><i data-lucide="instagram"></i></div>
-                <div><h3 id="current-category-title">Instagram</h3><p>Choose a service from the list below</p></div>
-              </div>
-              <div class="service-card-item selected" data-category="instagram" data-rate="35" data-name="Instagram Followers" data-min="1000" data-max="1010000" data-badges="High quality followers | Instant Start | No Drop">
-                <div style="display: flex; align-items: center; gap: 12px;"><i data-lucide="instagram" style="color: #ec4899;"></i><span class="service-item-title">Instagram Followers</span></div>
-                <span class="service-item-rate">₹35 / 1K</span>
-              </div>
-              <div class="service-details-card" style="margin-top: 24px;">
-                <div class="service-details-top">
-                  <div>
-                    <h4 id="selected-service-name" style="font-size: 18px; font-weight: 800;">Instagram Followers</h4>
-                    <div class="badges-wrap"><span id="selected-service-badges" class="badge-feature">High quality followers | Instant Start | No Drop</span></div>
-                  </div>
-                  <div style="text-align: right;">
-                    <div id="selected-service-rate" style="font-size: 20px; font-weight: 900; color: #2563eb;">₹35 / 1K</div>
-                    <span class="badge-speed" style="display: inline-block; margin-top: 4px;">Fast Delivery</span>
-                  </div>
-                </div>
-                <div style="margin-top: 20px;">
-                  <label class="form-field-label">Quantity</label>
-                  <div class="quantity-stepper-box">
-                    <button type="button" class="step-calc-btn" id="qty-minus-btn">&minus;</button>
-                    <input type="number" id="order-quantity-input" class="quantity-input" value="1000" min="1000" max="1010000" step="100">
-                    <button type="button" class="step-calc-btn" id="qty-plus-btn">&plus;</button>
-                  </div>
-                </div>
-                <div style="margin-top: 18px;">
-                  <label class="form-field-label">Instagram Link / Profile URL</label>
-                  <input type="url" id="order-link-input" placeholder="https://instagram.com/yourusername" style="width: 100%;">
-                </div>
-                <div class="total-price-bar">
-                  <span class="total-price-label">Total Price</span>
-                  <span class="total-price-val" id="calculated-order-price">₹35.00</span>
-                </div>
-                <button type="button" class="btn-primary" id="btn-place-order" onclick="placeNewOrder()">Place Order &rarr;</button>
+            <div class="data-table-card" style="padding: 20px;">
+              <h4 style="margin: 0 0 10px 0; font-size: 15px; font-weight: 800;">Quick Add Funds</h4>
+              <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Add instant wallet balance to test orders.</p>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-secondary" style="flex: 1;" onclick="addFundsSimulated(100)">+<span class="curr-sym">₹</span>100</button>
+                <button class="btn-secondary" style="flex: 1;" onclick="addFundsSimulated(500)">+<span class="curr-sym">₹</span>500</button>
+                <button class="btn-primary" style="flex: 1; padding: 10px;" onclick="addFundsSimulated(1000)">+<span class="curr-sym">₹</span>1000</button>
               </div>
             </div>
           </div>
         </div>
 
-        <div id="page-add-funds" class="page-view-container">
-          <div class="page-back-header">
-            <button class="back-btn-link"><span class="back-icon-circle"><i data-lucide="arrow-left"></i></span><span>Add Funds</span></button>
-          </div>
-          <div class="funds-current-card">
-            <div><div class="balance-label" style="text-align: left;">Current Balance</div><div class="funds-current-val live-user-balance">₹850.50</div></div>
-            <div class="brand-icon-box" style="width: 56px; height: 56px; border-radius: 18px;"><i data-lucide="wallet" style="width: 28px; height: 28px;"></i></div>
-          </div>
-          <label class="form-field-label" style="font-size: 15px; margin-bottom: 12px;">Select Amount</label>
-          <div class="amount-chips-grid">
-            <div class="amount-chip" data-amount="100">₹100</div>
-            <div class="amount-chip selected" data-amount="200">₹200</div>
-            <div class="amount-chip" data-amount="500">₹500</div>
-            <div class="amount-chip" data-amount="1000">₹1,000</div>
-            <div class="amount-chip" data-amount="2000">₹2,000</div>
-            <div class="amount-chip" data-amount="5000">Other</div>
-          </div>
-          <button type="button" class="btn-primary" id="btn-pay-now-funds" onclick="triggerAddFundsPayment()">Pay Now ₹200 &rarr;</button>
-        </div>
-
-        <div id="page-my-orders" class="page-view-container">
-          <div class="page-back-header">
-            <button class="back-btn-link"><span class="back-icon-circle"><i data-lucide="arrow-left"></i></span><span>My Orders</span></button>
-          </div>
-          <div class="filter-tabs-row">
-            <button class="filter-pill-btn active order-filter-pill" data-filter="all">All</button>
-            <button class="filter-pill-btn order-filter-pill" data-filter="processing">Processing</button>
-            <button class="filter-pill-btn order-filter-pill" data-filter="completed">Completed</button>
-          </div>
-          <div class="orders-list-wrap" id="my-orders-list-container">
-            <div class="order-card-row" data-status="processing">
-              <div class="order-info-group">
-                <div class="order-social-icon"><i data-lucide="instagram"></i></div>
-                <div><div class="order-meta-title">Instagram Followers</div><div class="order-meta-sub">1K &bull; ₹35</div></div>
-              </div>
-              <div style="text-align: right;"><span class="badge badge-warning">Processing</span><div class="order-meta-id" style="margin-top: 4px;">#10254</div></div>
-            </div>
-            <div class="order-card-row" data-status="completed">
-              <div class="order-info-group">
-                <div class="order-social-icon" style="color: #ef4444; background: #fee2e2;"><i data-lucide="youtube"></i></div>
-                <div><div class="order-meta-title">YouTube Views</div><div class="order-meta-sub">5K &bull; ₹120</div></div>
-              </div>
-              <div style="text-align: right;"><span class="badge badge-success">Completed</span><div class="order-meta-id" style="margin-top: 4px;">#10253</div></div>
-            </div>
-          </div>
-        </div>
-
-        <div id="page-all-services" class="page-view-container">
-          <div class="page-back-header">
-            <button class="back-btn-link"><span class="back-icon-circle"><i data-lucide="arrow-left"></i></span><span>All Services</span></button>
-          </div>
-          <div class="services-grid-cards">
-            <div class="service-box-card" onclick="expandCardToPage(this, 'page-new-order')">
-              <div class="service-box-icon" style="background: #fdf2f8; color: #db2777;"><i data-lucide="instagram"></i></div>
-              <div class="service-box-name">Followers</div>
-              <div class="service-box-price">₹35 / 1K</div>
-            </div>
-            <div class="service-box-card" onclick="expandCardToPage(this, 'page-new-order')">
-              <div class="service-box-icon" style="background: #fff1f2; color: #e11d48;"><i data-lucide="heart"></i></div>
-              <div class="service-box-name">Likes</div>
-              <div class="service-box-price">₹20 / 1K</div>
-            </div>
-          </div>
-        </div>
-
-        <div id="page-transactions" class="page-view-container">
-          <div class="page-back-header">
-            <button class="back-btn-link"><span class="back-icon-circle"><i data-lucide="arrow-left"></i></span><span>Transactions</span></button>
-          </div>
-          <div class="transactions-list-wrap">
-            <div class="txn-card-item">
-              <div><div style="font-weight: 800;">Add Funds - Razorpay</div><div style="font-size: 12px; color: #64748b;">12 May 2025, 4:12 PM</div></div>
-              <div class="txn-amount-credit">+ ₹500</div>
-            </div>
-            <div class="txn-card-item">
-              <div><div style="font-weight: 800;">Order #10254 Payment</div><div style="font-size: 12px; color: #64748b;">12 May 2025, 4:32 PM</div></div>
-              <div class="txn-amount-debit">- ₹35</div>
-            </div>
-          </div>
-        </div>
-
-        <div id="page-tickets" class="page-view-container">
-          <div class="page-back-header">
-            <button class="back-btn-link"><span class="back-icon-circle"><i data-lucide="arrow-left"></i></span><span>Support</span></button>
-            <button class="btn-primary" style="width: auto; padding: 10px 18px;" onclick="showToast('Create ticket form opened', 'info')">+ Create Ticket</button>
-          </div>
-          <div class="ticket-row-card">
-            <div><div style="font-weight: 800;">#T1024 Order not started yet</div><div style="font-size: 12px; color: #64748b;">12 May 2025, 11:20 AM</div></div>
-            <span class="badge badge-warning">Open</span>
-          </div>
-        </div>
-
-        <div id="page-profile" class="page-view-container">
-          <div class="page-back-header">
-            <button class="back-btn-link"><span class="back-icon-circle"><i data-lucide="arrow-left"></i></span><span>Profile</span></button>
-          </div>
-          <div class="profile-avatar-banner">
-            <div class="welcome-avatar" style="width: 54px; height: 54px;"><i data-lucide="user"></i></div>
-            <div>
-              <div style="font-size: 18px; font-weight: 800;">Aaris Ali</div>
-              <div style="font-size: 13px; color: #64748b;">User ID: #1024 &bull; Verified</div>
-            </div>
-          </div>
-        </div>
-
-        <div id="page-notifications" class="page-view-container">
-          <div class="page-back-header">
-            <button class="back-btn-link"><span class="back-icon-circle"><i data-lucide="arrow-left"></i></span><span>Notifications</span></button>
-          </div>
-          <div class="order-card-row">
-            <div><strong>Order #10254 In Progress</strong><div style="font-size: 12px; color: #64748b;">Followers delivery in progress</div></div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- ===================================================
-         VIEW 5: PROTECTED ADMIN PANEL (/admin/)
-         =================================================== -->
-    <div id="view-admin-dashboard" style="display: none; padding-bottom: 90px;">
-      <div class="app-container">
-        <header class="app-header">
-          <div class="brand-badge">
-            <div class="brand-icon-box" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);"><i data-lucide="shield-check"></i></div>
-            <div>
-              <div class="brand-title">SMM Panel <span class="admin-header-badge">Admin</span></div>
-              <div class="brand-subtitle">Super Administrator Session Active</div>
-            </div>
-          </div>
-          <div class="header-actions">
-            <button class="btn-secondary" style="color: #ef4444;" onclick="logoutAll()"><i data-lucide="log-out"></i> Admin Logout</button>
-          </div>
-        </header>
-
-        <div class="admin-stats-grid">
-          <div class="admin-stat-card">
-            <div><div class="stat-label-small">TOTAL USERS</div><div class="stat-val-large">1,240</div></div>
-            <div class="brand-icon-box" style="background: #eff6ff; color: #2563eb;"><i data-lucide="users"></i></div>
-          </div>
-          <div class="admin-stat-card">
-            <div><div class="stat-label-small">TOTAL ORDERS</div><div class="stat-val-large">10,254</div></div>
-            <div class="brand-icon-box" style="background: #ecfdf5; color: #10b981;"><i data-lucide="shopping-cart"></i></div>
-          </div>
-          <div class="admin-stat-card">
-            <div><div class="stat-label-small">TOTAL REVENUE</div><div class="stat-val-large">₹2,48,900</div></div>
-            <div class="brand-icon-box" style="background: #fef3c7; color: #f59e0b;"><i data-lucide="dollar-sign"></i></div>
-          </div>
-          <div class="admin-stat-card">
-            <div><div class="stat-label-small">CONNECTED PROVIDERS</div><div class="stat-val-large">3 Active</div></div>
-            <div class="brand-icon-box" style="background: #f5f3ff; color: #8b5cf6;"><i data-lucide="server"></i></div>
-          </div>
-        </div>
-
-        <div class="data-table-card">
+        <!-- Orders Table -->
+        <div class="data-table-card" style="margin-top: 24px;">
           <div class="data-table-header">
-            <div>
-              <h3 style="font-size: 18px; font-weight: 800;">Connected SMM API Providers</h3>
-              <p style="font-size: 13px; color: var(--text-muted);">Synchronized server-side via <code>cron/cron.php</code></p>
-            </div>
-            <button class="btn-primary" style="width: auto; padding: 10px 18px;" onclick="showToast('Add Provider Modal', 'info')">+ Add Provider</button>
+            <h3 style="margin: 0; font-size: 17px; font-weight: 800;">Your Recent Orders</h3>
           </div>
-          <table class="app-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Provider Name</th>
-                <th>API Endpoint</th>
-                <th>Balance</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>#1</td>
-                <td><strong>GlobalSMM Prime API</strong></td>
-                <td><code>https://api.globalsmm.pro/v2</code></td>
-                <td><strong style="color: #10b981;">$428.60 USD</strong></td>
-                <td><span class="badge badge-success">Connected</span></td>
-                <td><button class="btn-secondary" onclick="showToast('Synced $428.60 USD', 'success')">Sync</button></td>
-              </tr>
-              <tr>
-                <td>#2</td>
-                <td><strong>TurboPanel Provider</strong></td>
-                <td><code>https://turbopanel.net/api/v2</code></td>
-                <td><strong style="color: #10b981;">$1,250.00 USD</strong></td>
-                <td><span class="badge badge-success">Connected</span></td>
-                <td><button class="btn-secondary" onclick="showToast('Synced $1,250.00 USD', 'success')">Sync</button></td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="table-responsive">
+            <table class="app-table">
+              <thead>
+                <tr>
+                  <th>Order Code</th>
+                  <th>Service</th>
+                  <th>Quantity</th>
+                  <th>Charge</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="user-orders-table-body">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Scripts: GSAP, Swiper.js, Lucide Icons & Custom Modules -->
+    <!-- USER MODALS -->
+    <!-- Modal: Notifications -->
+    <div class="modal-overlay" id="modal-notifications">
+      <div class="modal-window" style="max-width: 600px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="font-size: 18px; font-weight: 900; margin: 0;">Your Notifications</h3>
+          <button style="background:none; border:none; cursor:pointer;" onclick="closeUserModal('modal-notifications')">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div id="user-full-notifs-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Add Funds -->
+    <div class="modal-overlay" id="modal-add-funds">
+      <div class="modal-window">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="font-size: 18px; font-weight: 900; margin: 0;">Add Wallet Funds</h3>
+          <button style="background:none; border:none; cursor:pointer;" onclick="closeUserModal('modal-add-funds')">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Choose deposit amount to instantly credit your account:</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+          <button class="btn-secondary" onclick="addFundsSimulated(200); closeUserModal('modal-add-funds');">+ <span class="curr-sym">₹</span>200</button>
+          <button class="btn-secondary" onclick="addFundsSimulated(500); closeUserModal('modal-add-funds');">+ <span class="curr-sym">₹</span>500</button>
+          <button class="btn-secondary" onclick="addFundsSimulated(1000); closeUserModal('modal-add-funds');">+ <span class="curr-sym">₹</span>1,000</button>
+          <button class="btn-primary" onclick="addFundsSimulated(2500); closeUserModal('modal-add-funds');">+ <span class="curr-sym">₹</span>2,500</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         VIEW 3: ADMIN PANEL (WITH COMPLETE SETTINGS SAVING & UNIFIED NAVBAR)
+         ========================================================================= -->
+    <div id="view-admin" class="app-view-pane">
+      <!-- Admin Navbar -->
+      <header class="admin-nav-header">
+        <div class="admin-nav-inner">
+          <div class="admin-brand">
+            <div class="admin-brand-logo">
+              <i data-lucide="shield-check" style="width: 22px; height: 22px;"></i>
+            </div>
+            <div>
+              <div class="admin-brand-title" id="admin-brand-site-title">SMM Panel</div>
+              <div class="admin-brand-tagline">Admin Management</div>
+            </div>
+          </div>
+
+          <nav class="admin-nav-menu">
+            <button class="admin-nav-item active" id="adm-tab-dash" onclick="switchAdminSection('dash')">
+              <i data-lucide="layout-dashboard"></i> <span>Dashboard</span>
+            </button>
+            <button class="admin-nav-item" id="adm-tab-users" onclick="switchAdminSection('users')">
+              <i data-lucide="users"></i> <span>Users</span>
+            </button>
+            <button class="admin-nav-item" id="adm-tab-orders" onclick="switchAdminSection('orders')">
+              <i data-lucide="shopping-cart"></i> <span>Orders</span>
+            </button>
+            <button class="admin-nav-item" id="adm-tab-settings" onclick="switchAdminSection('settings')">
+              <i data-lucide="settings"></i> <span>Settings</span>
+            </button>
+          </nav>
+
+          <div class="admin-user-badge">
+            <div class="admin-profile-pill">
+              <i data-lucide="user-check" style="width: 14px; height: 14px; color: var(--primary-blue);"></i>
+              <span class="name-text">Super Admin</span>
+            </div>
+            <button class="icon-btn" onclick="switchMainView('landing')" title="Sign Out" style="color: #ef4444;">
+              <i data-lucide="log-out"></i>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="admin-layout" style="padding-bottom: 90px;">
+
+        <!-- Admin Section 1: Dashboard -->
+        <div id="adm-sec-dash">
+          <div style="margin-bottom: 24px;">
+            <h1 style="font-size: 24px; font-weight: 900; margin: 0 0 6px 0;">Dashboard Overview</h1>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Live platform overview with real currency formatting.</p>
+          </div>
+
+          <div class="admin-stats-grid">
+            <div class="admin-stat-card">
+              <div>
+                <div class="stat-label-small">TOTAL USERS</div>
+                <div class="stat-val-large" id="adm-stat-users">1</div>
+              </div>
+              <div class="brand-icon-box" style="background: #eff6ff; color: #2563eb;">
+                <i data-lucide="users"></i>
+              </div>
+            </div>
+
+            <div class="admin-stat-card">
+              <div>
+                <div class="stat-label-small">TOTAL ORDERS</div>
+                <div class="stat-val-large" id="adm-stat-orders">0</div>
+              </div>
+              <div class="brand-icon-box" style="background: #ecfdf5; color: #10b981;">
+                <i data-lucide="shopping-cart"></i>
+              </div>
+            </div>
+
+            <div class="admin-stat-card">
+              <div>
+                <div class="stat-label-small">TOTAL REVENUE</div>
+                <div class="stat-val-large"><span class="curr-sym">₹</span><span id="adm-stat-revenue">0.00</span></div>
+              </div>
+              <div class="brand-icon-box" style="background: #fef3c7; color: #f59e0b;">
+                <i data-lucide="credit-card"></i>
+              </div>
+            </div>
+
+            <div class="admin-stat-card">
+              <div>
+                <div class="stat-label-small">ACTIVE CURRENCY</div>
+                <div class="stat-val-large" id="adm-stat-currcode">INR</div>
+              </div>
+              <div class="brand-icon-box" style="background: #f3e8ff; color: #9333ea;">
+                <i data-lucide="coins"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Recent Activity -->
+          <div class="data-table-card">
+            <div class="data-table-header">
+              <h3 style="margin: 0; font-size: 17px; font-weight: 800;">Recent Platform Orders</h3>
+            </div>
+            <div class="table-responsive">
+              <table class="app-table">
+                <thead>
+                  <tr>
+                    <th>Order Code</th>
+                    <th>Customer</th>
+                    <th>Service</th>
+                    <th>Quantity</th>
+                    <th>Charge</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="adm-orders-preview-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Section 2: Settings (BUG 3 FIX: Live Saving & Currency Reflection) -->
+        <div id="adm-sec-settings" style="display: none;">
+          <div style="margin-bottom: 24px;">
+            <h1 style="font-size: 24px; font-weight: 900; margin: 0 0 6px 0;">Platform Settings</h1>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Change currency symbol, code, name, and website branding.</p>
+          </div>
+
+          <div class="data-table-card" style="padding: 32px 28px; max-width: 800px;">
+            <form onsubmit="event.preventDefault(); saveAdminSettingsLive();">
+              <div style="margin-bottom: 24px;">
+                <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                  <i data-lucide="coins" style="color: #16a34a;"></i> Currency &amp; Monetary Configuration
+                </h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
+                  When you save, the currency symbol immediately updates across all user balance displays, service prices, and admin statistics.
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 14px; margin-bottom: 14px;">
+                  <div>
+                    <label class="form-field-label">Currency Symbol</label>
+                    <input type="text" id="set-currency-sym" value="₹" required placeholder="₹, $, €, £" style="width: 100%;">
+                  </div>
+                  <div>
+                    <label class="form-field-label">Currency Code</label>
+                    <input type="text" id="set-currency-code" value="INR" required placeholder="INR, USD, EUR" style="width: 100%;">
+                  </div>
+                  <div>
+                    <label class="form-field-label">Currency Name</label>
+                    <input type="text" id="set-currency-name" value="Indian Rupee" required style="width: 100%;">
+                  </div>
+                </div>
+              </div>
+
+              <hr style="border: 0; border-top: 1px solid var(--border-light); margin: 24px 0;">
+
+              <div style="margin-bottom: 24px;">
+                <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                  <i data-lucide="globe" style="color: #2563eb;"></i> Platform Branding
+                </h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                  <div>
+                    <label class="form-field-label">Website Name</label>
+                    <input type="text" id="set-site-name" value="SMM Panel" required style="width: 100%;">
+                  </div>
+                  <div>
+                    <label class="form-field-label">Website Tagline</label>
+                    <input type="text" id="set-site-tagline" value="Grow Your Social Media" style="width: 100%;">
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-primary" style="width: auto; padding: 12px 30px;">
+                <i data-lucide="save"></i> Save Configuration
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Admin Section 3: Users -->
+        <div id="adm-sec-users" style="display: none;">
+          <div style="margin-bottom: 24px;">
+            <h1 style="font-size: 24px; font-weight: 900; margin: 0 0 6px 0;">User Accounts</h1>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Registered platform customers and wallet balances.</p>
+          </div>
+
+          <div class="data-table-card">
+            <div class="table-responsive">
+              <table class="app-table">
+                <thead>
+                  <tr>
+                    <th>User ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Wallet Balance</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="adm-users-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Section 4: Orders -->
+        <div id="adm-sec-orders" style="display: none;">
+          <div style="margin-bottom: 24px;">
+            <h1 style="font-size: 24px; font-weight: 900; margin: 0 0 6px 0;">Orders Management</h1>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Monitor incoming orders and provider fulfillment.</p>
+          </div>
+
+          <div class="data-table-card">
+            <div class="table-responsive">
+              <table class="app-table">
+                <thead>
+                  <tr>
+                    <th>Order Code</th>
+                    <th>Customer</th>
+                    <th>Service</th>
+                    <th>Quantity</th>
+                    <th>Charge</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="adm-orders-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         VIEW 4: WEB INSTALLER (/install/index.php)
+         ========================================================================= -->
+    <div id="view-install" class="app-view-pane">
+      <div style="max-width: 760px; margin: 40px auto 100px; padding: 0 16px;">
+        <div style="text-align: center; margin-bottom: 28px;">
+          <div class="brand-icon-box" style="margin: 0 auto 12px auto;">
+            <i data-lucide="layers" style="width: 24px; height: 24px;"></i>
+          </div>
+          <h1 style="font-size: 26px; font-weight: 900; letter-spacing: -0.5px;">SMM Panel Web Installer</h1>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Automated Database &amp; Security Setup Wizard &bull; <code>/install/index.php</code></p>
+        </div>
+
+        <div class="installer-step-card">
+          <!-- 6-step progress -->
+          <div class="installer-progress-bar">
+            <div class="progress-step-item active" id="wizard-step-1">
+              <div class="progress-step-circle">1</div>
+              <div class="progress-step-title">System</div>
+            </div>
+            <div class="progress-step-item" id="wizard-step-2">
+              <div class="progress-step-circle">2</div>
+              <div class="progress-step-title">Database</div>
+            </div>
+            <div class="progress-step-item" id="wizard-step-3">
+              <div class="progress-step-circle">3</div>
+              <div class="progress-step-title">Tables</div>
+            </div>
+            <div class="progress-step-item" id="wizard-step-4">
+              <div class="progress-step-circle">4</div>
+              <div class="progress-step-title">Admin</div>
+            </div>
+            <div class="progress-step-item" id="wizard-step-5">
+              <div class="progress-step-circle">5</div>
+              <div class="progress-step-title">Settings</div>
+            </div>
+            <div class="progress-step-item" id="wizard-step-6">
+              <div class="progress-step-circle">6</div>
+              <div class="progress-step-title">Done</div>
+            </div>
+          </div>
+
+          <div id="wizard-pane-1">
+            <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">Step 1 — System &amp; Extension Check</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Checking PHP environment and required extensions:</p>
+            <div class="check-row-item">
+              <span><i data-lucide="server"></i> PHP Version (&gt;= 8.0)</span>
+              <span class="badge badge-success">PHP 8.2 Compatible</span>
+            </div>
+            <div class="check-row-item">
+              <span><i data-lucide="database"></i> PDO MySQL Driver</span>
+              <span class="badge badge-success">Enabled</span>
+            </div>
+            <div class="check-row-item">
+              <span><i data-lucide="globe"></i> cURL API Extension</span>
+              <span class="badge badge-success">Enabled</span>
+            </div>
+            <div class="check-row-item">
+              <span><i data-lucide="lock"></i> OpenSSL &amp; Session</span>
+              <span class="badge badge-success">Enabled</span>
+            </div>
+            <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+              <button class="btn-primary" style="width: auto; padding: 12px 28px;" onclick="goToWizardStep(2)">
+                Continue to Database &rarr;
+              </button>
+            </div>
+          </div>
+
+          <div id="wizard-pane-2" style="display: none;">
+            <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">Step 2 — Database Configuration</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Enter your MySQL credentials to test connection:</p>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div>
+                <label class="form-field-label">Database Host</label>
+                <input type="text" value="localhost" style="width: 100%;">
+              </div>
+              <div>
+                <label class="form-field-label">Port</label>
+                <input type="text" value="3306" style="width: 100%;">
+              </div>
+            </div>
+            <div style="margin-bottom: 12px;">
+              <label class="form-field-label">Database Name</label>
+              <input type="text" value="smm_panel" style="width: 100%;">
+            </div>
+            <div style="margin-bottom: 18px;">
+              <label class="form-field-label">Username</label>
+              <input type="text" value="root" style="width: 100%;">
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <button class="btn-secondary" onclick="goToWizardStep(1)">&larr; Back</button>
+              <button class="btn-primary" style="width: auto; padding: 12px 28px;" onclick="goToWizardStep(3)">
+                Test Connection &rarr;
+              </button>
+            </div>
+          </div>
+
+          <div id="wizard-pane-3" style="display: none;">
+            <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">Step 3 — Create Database Tables</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Migrates <code>database/schema.sql</code> into your MySQL database:</p>
+            <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 16px; padding: 16px; font-size: 13px; color: #475569; margin-bottom: 20px;">
+              &bull; Users &amp; Admins credentials tables with secure password hashing<br>
+              &bull; Notifications ledger table with unread counters<br>
+              &bull; Services, Categories &amp; SMM API Providers mapping<br>
+              &bull; Orders, Payments &amp; Financial Ledger with DECIMAL precision
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <button class="btn-secondary" onclick="goToWizardStep(2)">&larr; Back</button>
+              <button class="btn-primary" style="width: auto; padding: 12px 28px;" onclick="goToWizardStep(4)">
+                Run Migration &rarr;
+              </button>
+            </div>
+          </div>
+
+          <div id="wizard-pane-4" style="display: none;">
+            <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">Step 4 — Create Admin Account</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Super Administrator password is hashed via <code>password_hash()</code>:</p>
+            <div style="margin-bottom: 12px;">
+              <label class="form-field-label">Admin Name</label>
+              <input type="text" value="Super Admin" style="width: 100%;">
+            </div>
+            <div style="margin-bottom: 12px;">
+              <label class="form-field-label">Admin Email</label>
+              <input type="email" value="admin@smmpanel.com" style="width: 100%;">
+            </div>
+            <div style="margin-bottom: 18px;">
+              <label class="form-field-label">Password</label>
+              <input type="password" value="SuperSecretPassword123" style="width: 100%;">
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <button class="btn-secondary" onclick="goToWizardStep(3)">&larr; Back</button>
+              <button class="btn-primary" style="width: auto; padding: 12px 28px;" onclick="goToWizardStep(5)">
+                Create Admin &rarr;
+              </button>
+            </div>
+          </div>
+
+          <div id="wizard-pane-5" style="display: none;">
+            <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">Step 5 — Website Settings &amp; Lock</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Saves configuration and locks installer via <code>installed.lock</code>:</p>
+            <div style="margin-bottom: 12px;">
+              <label class="form-field-label">Website Name</label>
+              <input type="text" value="SMM Panel" style="width: 100%;">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px;">
+              <div>
+                <label class="form-field-label">Currency Symbol</label>
+                <input type="text" value="₹" style="width: 100%;">
+              </div>
+              <div>
+                <label class="form-field-label">Currency Code</label>
+                <input type="text" value="INR" style="width: 100%;">
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <button class="btn-secondary" onclick="goToWizardStep(4)">&larr; Back</button>
+              <button class="btn-primary" style="width: auto; padding: 12px 28px;" onclick="goToWizardStep(6)">
+                Save &amp; Generate Lock &rarr;
+              </button>
+            </div>
+          </div>
+
+          <div id="wizard-pane-6" style="display: none; text-align: center; padding: 20px 0;">
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px auto;">
+              <i data-lucide="check-circle" style="width: 36px; height: 36px;"></i>
+            </div>
+            <h2 style="font-size: 24px; font-weight: 900; margin-bottom: 8px;">Installation Complete!</h2>
+            <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 24px;">
+              <code>install/installed.lock</code> was created. Re-installation is now permanently blocked.
+            </p>
+            <div style="display: flex; justify-content: center; gap: 12px;">
+              <button class="btn-primary" style="width: auto; padding: 12px 24px;" onclick="switchMainView('user')">Go to Website &rarr;</button>
+              <button class="btn-secondary" style="padding: 12px 24px;" onclick="switchMainView('admin')">Go to Admin Login</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         VIEW 5: USER LOGIN / REGISTRATION
+         ========================================================================= -->
+    <div id="view-login" class="app-view-pane">
+      <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px 14px 100px;">
+        <div class="auth-split-wrapper" style="width: 100%; max-width: 880px;">
+          <div class="auth-dual-card">
+            <!-- Left Hero -->
+            <div class="auth-hero-side">
+              <div class="brand-badge">
+                <div class="brand-icon-box" style="background: rgba(255,255,255,0.2);">
+                  <i data-lucide="bar-chart-2" style="color: #ffffff;"></i>
+                </div>
+                <div>
+                  <div class="brand-title" style="color: #ffffff;">SMM Panel</div>
+                  <div class="brand-subtitle" style="color: rgba(255,255,255,0.8);">Grow Your Social Media</div>
+                </div>
+              </div>
+              <h2 style="font-size: 28px; font-weight: 900; margin-top: 40px; margin-bottom: 12px; line-height: 1.2;">
+                Accelerate Your Reach in Seconds
+              </h2>
+              <p style="font-size: 14px; color: rgba(255,255,255,0.85); line-height: 1.6;">
+                Real followers, high-retention views, and instant delivery across Instagram, YouTube, Telegram &amp; more.
+              </p>
+            </div>
+
+            <!-- Right Form -->
+            <div class="auth-form-side">
+              <div class="auth-switcher-wrap">
+                <button class="auth-switch-btn active" id="auth-tab-login" onclick="toggleAuthTab('login')">Login</button>
+                <button class="auth-switch-btn" id="auth-tab-reg" onclick="toggleAuthTab('register')">Register</button>
+              </div>
+
+              <div id="auth-box-login">
+                <h3 style="font-size: 20px; font-weight: 900; margin-bottom: 4px;">Welcome Back!</h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Sign in to manage your orders and wallet.</p>
+                <form onsubmit="event.preventDefault(); handleUserAuthSubmit('login');">
+                  <div class="form-field-group">
+                    <label class="form-field-label">Email Address</label>
+                    <input type="email" id="login-email" value="aarisali@gmail.com" required style="width: 100%;">
+                  </div>
+                  <div class="form-field-group">
+                    <label class="form-field-label">Password</label>
+                    <input type="password" id="login-pass" value="password123" required style="width: 100%;">
+                  </div>
+                  <button type="submit" class="btn-primary" style="margin-top: 10px;">Sign In &rarr;</button>
+                </form>
+              </div>
+
+              <div id="auth-box-register" style="display: none;">
+                <h3 style="font-size: 20px; font-weight: 900; margin-bottom: 4px;">Create New Account</h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Starts with <strong style="color: #2563eb;"><span class="curr-sym">₹</span>0.00 balance</strong>.</p>
+                <form onsubmit="event.preventDefault(); handleUserAuthSubmit('register');">
+                  <div class="form-field-group">
+                    <label class="form-field-label">Full Name</label>
+                    <input type="text" id="reg-name" placeholder="John Doe" required style="width: 100%;">
+                  </div>
+                  <div class="form-field-group">
+                    <label class="form-field-label">Email Address</label>
+                    <input type="email" id="reg-email" placeholder="john@example.com" required style="width: 100%;">
+                  </div>
+                  <div class="form-field-group">
+                    <label class="form-field-label">Password (min 8 chars)</label>
+                    <input type="password" id="reg-pass" placeholder="Create a password" required style="width: 100%;">
+                  </div>
+                  <button type="submit" class="btn-primary" style="margin-top: 10px;">Create Account (0.00 Balance) &rarr;</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         VIEW 6: ADMIN PORTAL LOGIN
+         ========================================================================= -->
+    <div id="view-admin-login" class="app-view-pane">
+      <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px 14px 100px;">
+        <div class="data-table-card" style="width: 100%; max-width: 440px; padding: 36px 28px;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <div class="admin-brand-logo" style="margin: 0 auto 12px auto; width: 48px; height: 48px; border-radius: 16px;">
+              <i data-lucide="shield-check" style="width: 26px; height: 26px;"></i>
+            </div>
+            <h2 style="font-size: 22px; font-weight: 900; margin: 0 0 4px 0;">Admin Portal</h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Restricted administrative authentication.</p>
+          </div>
+
+          <form onsubmit="event.preventDefault(); handleAdminLogin();">
+            <div class="form-field-group">
+              <label class="form-field-label">Admin Email / Username</label>
+              <input type="email" id="adm-login-email" value="admin@smmpanel.com" required style="width: 100%;">
+            </div>
+            <div class="form-field-group">
+              <label class="form-field-label">Admin Password</label>
+              <input type="password" id="adm-login-pass" value="SuperSecretPassword123" required style="width: 100%;">
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 8px;">
+              Authenticate Admin &rarr;
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCRIPTS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/assets/js/swiper-init.js"></script>
-    <script src="/assets/js/animations.js"></script>
-    <script src="/assets/js/user.js"></script>
-    <script src="/assets/js/admin.js"></script>
-    <script src="/assets/js/app.js"></script>
 
-    <!-- Security & Route Simulation Controller -->
     <script>
-      let authState = {
-        isInstalled: true,
-        isInstallerLocked: false,
-        currentUser: null,
-        currentAdmin: null
+      // ==========================================
+      // STATE MANAGEMENT (Real Data Simulation)
+      // ==========================================
+      const appState = {
+        settings: {
+          siteName: 'SMM Panel',
+          siteTagline: 'Grow Your Social Media',
+          currencySymbol: '₹',
+          currencyCode: 'INR',
+          currencyName: 'Indian Rupee'
+        },
+        user: {
+          id: 1024,
+          name: 'Aaris Ali',
+          email: 'aarisali@gmail.com',
+          balance: 0.00 // BUG 1 FIX: Strictly starts at 0.00
+        },
+        notifications: [
+          {
+            id: 1,
+            title: 'Welcome to SMM Panel!',
+            message: 'Your account was created with ₹0.00 balance. Add funds to start ordering.',
+            type: 'system',
+            time: 'Just now',
+            isRead: false
+          }
+        ],
+        orders: [],
+        totalRevenue: 0.00
       };
 
-      function triggerSecurityAlert(title, message) {
-        const modal = document.getElementById('security-alert-modal');
-        document.getElementById('security-alert-title').textContent = title;
-        document.getElementById('security-alert-desc').textContent = message;
-        modal.style.display = 'block';
-        if (typeof gsap !== 'undefined') {
-          gsap.fromTo(modal, { y: -30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3 });
-        }
+      // Toast Helper
+      function showToast(msg, type = 'info') {
+        const toast = document.getElementById('toast-notification');
+        const text = document.getElementById('toast-text');
+        text.textContent = msg;
+        toast.className = 'toast-popup visible';
+        toast.style.background = type === 'success' ? '#16a34a' : type === 'error' ? '#dc2626' : '#0f172a';
         setTimeout(() => {
-          if (typeof gsap !== 'undefined') {
-            gsap.to(modal, { y: -30, opacity: 0, duration: 0.3, onComplete: () => modal.style.display = 'none' });
-          } else {
-            modal.style.display = 'none';
-          }
+          toast.className = 'toast-popup';
         }, 3200);
       }
 
-      function switchRoute(route) {
-        document.getElementById('view-installer').style.display = 'none';
-        document.getElementById('view-user-login').style.display = 'none';
-        document.getElementById('view-admin-login').style.display = 'none';
-        document.getElementById('view-user-dashboard').style.display = 'none';
-        document.getElementById('view-admin-dashboard').style.display = 'none';
+      // View Switcher
+      function switchMainView(viewId, subTab = null) {
+        document.querySelectorAll('.app-view-pane').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.switcher-btn').forEach(btn => btn.classList.remove('active'));
 
-        if (route === '/install/') {
-          document.getElementById('view-installer').style.display = 'block';
-          document.getElementById('installer-locked-card').style.display = authState.isInstallerLocked ? 'block' : 'none';
-          document.getElementById('installer-wizard-card').style.display = authState.isInstallerLocked ? 'none' : 'block';
-        } else if (route === '/login.php') {
-          document.getElementById('view-user-login').style.display = 'block';
-        } else if (route === '/admin/login') {
-          document.getElementById('view-admin-login').style.display = 'block';
-        } else if (route === '/user/') {
-          if (!authState.currentUser) {
-            triggerSecurityAlert('Unauthorized User Access', 'Access to /user/ requires an active authenticated user session. Redirecting to /login.php');
-            switchRoute('/login.php');
-            return;
-          }
-          document.getElementById('view-user-dashboard').style.display = 'block';
-          setTimeout(initHubCarousel, 50);
-        } else if (route === '/admin/') {
-          if (!authState.currentAdmin) {
-            triggerSecurityAlert('Unauthorized Admin Access', 'Access to /admin/ requires valid super_admin session. Redirecting to /admin/index.php');
-            switchRoute('/admin/login');
-            return;
-          }
-          document.getElementById('view-admin-dashboard').style.display = 'block';
+        const target = document.getElementById(`view-${viewId}`);
+        if (target) target.classList.add('active');
+
+        const tabBtn = document.getElementById(`tab-${viewId}`);
+        if (tabBtn) tabBtn.classList.add('active');
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        if (viewId === 'landing' && typeof landingSwiper !== 'undefined') {
+          setTimeout(() => landingSwiper.update(), 50);
+        }
+
+        if (viewId === 'login' && subTab) {
+          toggleAuthTab(subTab);
         }
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
       }
 
-      function testDirectAccess(path) {
-        // Enforce strict unauthenticated test
-        if (path === '/admin/' || path === '/admin/users.php') {
-          if (!authState.currentAdmin) {
-            triggerSecurityAlert('HTTP 302 Redirect Enforced', `Unauthenticated visitor at ${path} rejected. Redirected to /admin/index.php`);
-            switchRoute('/admin/login');
-          } else {
-            switchRoute('/admin/');
+      // Admin Internal Section Switcher
+      function switchAdminSection(sec) {
+        ['dash', 'users', 'orders', 'settings'].forEach(s => {
+          const el = document.getElementById(`adm-sec-${s}`);
+          const tab = document.getElementById(`adm-tab-${s}`);
+          if (el) el.style.display = s === sec ? 'block' : 'none';
+          if (tab) tab.className = s === sec ? 'admin-nav-item active' : 'admin-nav-item';
+        });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      }
+
+      // 3D Swiper Carousel Setup
+      let landingSwiper;
+      function init3DSwiper() {
+        landingSwiper = new Swiper('.landing-3d-swiper-preview', {
+          effect: 'coverflow',
+          grabCursor: true,
+          centeredSlides: true,
+          slidesPerView: 'auto',
+          initialSlide: 1, // Instagram Center Card
+          loop: false,
+          speed: 600,
+          coverflowEffect: {
+            rotate: 15,
+            stretch: 0,
+            depth: 180,
+            modifier: 1,
+            slideShadows: false,
+          },
+          pagination: {
+            el: '.landing-swiper-pagination',
+            clickable: true,
+          },
+          breakpoints: {
+            320: { slidesPerView: 1.15, spaceBetween: 10 },
+            640: { slidesPerView: 1.6, spaceBetween: 20 },
+            1024: { slidesPerView: 3, spaceBetween: 30 }
           }
-        } else if (path === '/user/' || path === '/user/orders.php') {
-          if (!authState.currentUser) {
-            triggerSecurityAlert('HTTP 302 Redirect Enforced', `Unauthenticated visitor at ${path} rejected. Redirected to /login.php?type=user`);
-            switchRoute('/login.php');
-          } else {
-            switchRoute('/user/');
-          }
+        });
+      }
+
+      // GSAP Card Zoom on Tap (Requirement 11)
+      function zoomCardToTarget(btn, targetView, modalType) {
+        const card = btn.closest('.landing-card-slide');
+        if (typeof gsap !== 'undefined' && card) {
+          gsap.to(card, {
+            scale: 1.12,
+            boxShadow: '0 30px 60px rgba(37, 99, 235, 0.45)',
+            duration: 0.3,
+            onComplete: () => {
+              gsap.to(card, { scale: 1, duration: 0.2 });
+              switchMainView(targetView);
+              if (modalType === 'new-order') {
+                showToast('Welcome to your order desk!', 'success');
+              }
+            }
+          });
+        } else {
+          switchMainView(targetView);
         }
       }
 
-      function simulateLogin(type) {
-        if (type === 'user') {
-          authState.currentUser = { id: 1, name: 'Aaris Ali', email: 'aarisali@gmail.com', balance: 850.50 };
-          showToast('Authenticated as user Aaris Ali (#1024)', 'success');
-          switchRoute('/user/');
-        } else if (type === 'admin') {
-          authState.currentAdmin = { id: 1, name: 'Super Admin', email: 'admin@smmpanel.com', role: 'super_admin' };
-          showToast('Authenticated as Super Administrator', 'success');
-          switchRoute('/admin/');
+      // ==========================================
+      // BUG 1 & 2: BALANCE & NOTIFICATIONS SYNC
+      // ==========================================
+      function refreshUserUI() {
+        const sym = appState.settings.currencySymbol || '₹';
+        document.querySelectorAll('.curr-sym').forEach(el => el.textContent = sym);
+
+        // Update amount chips on add funds
+        document.querySelectorAll('.amount-chip').forEach(chip => {
+          const amt = chip.dataset.amount;
+          if (amt) {
+            chip.textContent = `${sym}${Number(amt).toLocaleString()}`;
+          }
+        });
+
+        // Update dropdown option text in user order form
+        const srvSelect = document.getElementById('user-order-service');
+        if (srvSelect) {
+          Array.from(srvSelect.options).forEach(opt => {
+            const rawName = opt.dataset.name || opt.text.split(' (Rate:')[0];
+            opt.dataset.name = rawName;
+            opt.textContent = `${rawName} (Rate: ${sym}${opt.value} / 1K)`;
+          });
         }
+
+        // Update Live Price calculation
+        updateLivePrice();
+
+        // User balance formatted to 2 decimals (strictly 0.00 for new user)
+        const balEl = document.getElementById('user-balance-amount');
+        if (balEl) balEl.textContent = Number(appState.user.balance).toFixed(2);
+
+        document.getElementById('user-display-name').textContent = appState.user.name;
+        document.getElementById('user-display-id').textContent = `User ID: #${appState.user.id}`;
+        document.getElementById('user-avatar-initials').textContent = appState.user.name.split(' ').map(n=>n[0]).join('').toUpperCase() || 'U';
+
+        // Unread notifications badge & lists
+        const unreadCount = appState.notifications.filter(n => !n.isRead).length;
+        const badge = document.getElementById('user-notif-badge');
+        if (badge) badge.style.display = unreadCount > 0 ? 'block' : 'none';
+
+        // Mini list
+        const miniList = document.getElementById('user-mini-notifs-list');
+        if (miniList) {
+          if (appState.notifications.length === 0) {
+            miniList.innerHTML = '<span style="font-size:12px;color:var(--text-muted);padding:10px 0;">No alerts yet</span>';
+          } else {
+            miniList.innerHTML = appState.notifications.slice(0, 3).map(n => `
+              <div style="font-size: 12px; padding: 10px 12px; border-radius: 12px; background: ${n.isRead ? '#f8fafc' : '#eff6ff'}; border: 1px solid ${n.isRead ? '#e2e8f0' : '#bfdbfe'};">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-weight: 800; color: #0f172a;">${n.title}</span>
+                  ${!n.isRead ? '<span style="width:7px;height:7px;background:#2563eb;border-radius:50%;display:inline-block;"></span>' : ''}
+                </div>
+                <div style="color: var(--text-muted); margin-top: 2px;">${n.message}</div>
+              </div>
+            `).join('');
+          }
+        }
+
+        // Full list modal
+        const fullList = document.getElementById('user-full-notifs-list');
+        if (fullList) {
+          if (appState.notifications.length === 0) {
+            fullList.innerHTML = '<div style="text-align:center;padding:32px;color:#64748b;"><p style="font-weight:700;">No notifications yet</p></div>';
+          } else {
+            fullList.innerHTML = appState.notifications.map(n => `
+              <div style="padding: 14px; border-radius: 14px; background: ${n.isRead ? '#ffffff' : '#f0fdf4'}; border: 1px solid #e2e8f0;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <strong style="font-size: 14px; color: #0f172a;">${n.title}</strong>
+                  <span style="font-size:11px;color:#94a3b8;">${n.time}</span>
+                </div>
+                <p style="font-size: 13px; color: #64748b; margin: 4px 0 8px 0;">${n.message}</p>
+                ${!n.isRead ? `<button class="notif-action-btn" onclick="markNotificationReadSingle(${n.id})">Mark as read</button>` : '<span style="font-size:11px;color:#16a34a;font-weight:700;">Read</span>'}
+              </div>
+            `).join('');
+          }
+        }
+
+        // Orders table
+        const ordersBody = document.getElementById('user-orders-table-body');
+        if (ordersBody) {
+          if (appState.orders.length === 0) {
+            ordersBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#64748b;padding:32px;">No orders placed yet. Choose a package above to begin!</td></tr>';
+          } else {
+            ordersBody.innerHTML = appState.orders.map(o => `
+              <tr>
+                <td><strong>${o.code}</strong></td>
+                <td><strong>${o.service}</strong></td>
+                <td>${Number(o.qty).toLocaleString()}</td>
+                <td><strong>${sym}${Number(o.charge).toFixed(2)}</strong></td>
+                <td><span class="badge badge-success">${o.status}</span></td>
+                <td>${o.date}</td>
+              </tr>
+            `).join('');
+          }
+        }
+
+        // Admin stats & tables
+        const admUsers = document.getElementById('adm-users-table-body');
+        if (admUsers) {
+          admUsers.innerHTML = `
+            <tr>
+              <td>#${appState.user.id}</td>
+              <td><strong>${appState.user.name}</strong></td>
+              <td>${appState.user.email}</td>
+              <td><strong style="color: #2563eb;">${sym}${Number(appState.user.balance).toFixed(2)}</strong></td>
+              <td><span class="badge badge-success">Active</span></td>
+            </tr>
+          `;
+        }
+
+        const admOrders = document.getElementById('adm-orders-table-body');
+        const admOrdersPreview = document.getElementById('adm-orders-preview-body');
+        const ordersRows = appState.orders.length === 0 
+          ? '<tr><td colspan="6" style="text-align:center;color:#64748b;padding:24px;">No customer orders yet.</td></tr>'
+          : appState.orders.map(o => `
+            <tr>
+              <td><strong>${o.code}</strong></td>
+              <td>${appState.user.name}</td>
+              <td>${o.service}</td>
+              <td>${Number(o.qty).toLocaleString()}</td>
+              <td><strong>${sym}${Number(o.charge).toFixed(2)}</strong></td>
+              <td><span class="badge badge-success">${o.status}</span></td>
+            </tr>
+          `).join('');
+        if (admOrders) admOrders.innerHTML = ordersRows;
+        if (admOrdersPreview) admOrdersPreview.innerHTML = ordersRows;
+
+        document.getElementById('adm-stat-orders').textContent = appState.orders.length;
+        document.getElementById('adm-stat-revenue').textContent = Number(appState.totalRevenue).toFixed(2);
+        document.getElementById('adm-stat-currcode').textContent = appState.settings.currencyCode;
       }
 
-      function logoutAll() {
-        authState.currentUser = null;
-        authState.currentAdmin = null;
-        showToast('All sessions invalidated & cleared from memory', 'info');
-        switchRoute('/login.php');
+      function updateLivePrice() {
+        const sel = document.getElementById('user-order-service');
+        const rate = sel ? parseFloat(sel.value) : 35.00;
+        const qty = parseInt(document.getElementById('user-order-qty').value) || 1000;
+        const total = ((rate / 1000) * qty).toFixed(2);
+        const priceEl = document.getElementById('user-order-total-price');
+        if (priceEl) priceEl.textContent = total;
       }
 
-      function submitUserLoginForm() {
-        const email = document.getElementById('input-user-email').value.trim();
-        const pass = document.getElementById('input-user-pass').value;
-        const err = document.getElementById('user-login-error');
+      function submitLiveOrder() {
+        const sel = document.getElementById('user-order-service');
+        const rate = parseFloat(sel.value);
+        const srvName = sel.options[sel.selectedIndex].dataset.name || 'Instagram Followers';
+        const link = document.getElementById('user-order-link').value.trim();
+        const qty = parseInt(document.getElementById('user-order-qty').value) || 1000;
+        const charge = parseFloat(((rate / 1000) * qty).toFixed(2));
 
-        if (!email || !pass) {
-          err.textContent = 'Please enter both email and password.';
-          err.style.display = 'block';
+        if (appState.user.balance < charge) {
+          showToast(`Insufficient funds! Order costs ${appState.settings.currencySymbol}${charge}, your balance is ${appState.settings.currencySymbol}${appState.user.balance.toFixed(2)}. Add funds first!`, 'error');
           return;
         }
 
-        simulateLogin('user');
+        appState.user.balance -= charge;
+        appState.totalRevenue += charge;
+        const orderCode = `#${Math.floor(10000 + Math.random() * 90000)}`;
+
+        appState.orders.unshift({
+          code: orderCode,
+          service: srvName,
+          qty: qty,
+          charge: charge,
+          status: 'Processing',
+          date: 'Just now'
+        });
+
+        // Trigger Notification
+        appState.notifications.unshift({
+          id: Date.now(),
+          title: `Order ${orderCode} Received`,
+          message: `Your order for ${srvName} is now processing. Deducted ${appState.settings.currencySymbol}${charge.toFixed(2)}.`,
+          type: 'order',
+          time: 'Just now',
+          isRead: false
+        });
+
+        refreshUserUI();
+        showToast(`Order ${orderCode} placed successfully!`, 'success');
+        document.getElementById('user-order-link').value = '';
       }
 
-      function submitAdminLoginForm() {
-        const email = document.getElementById('input-admin-email').value.trim();
-        const pass = document.getElementById('input-admin-pass').value;
-        const err = document.getElementById('admin-login-error');
-
-        if (!email || !pass) {
-          err.textContent = 'Please enter administrator credentials.';
-          err.style.display = 'block';
-          return;
-        }
-
-        simulateLogin('admin');
+      function addFundsSimulated(amount) {
+        appState.user.balance += amount;
+        appState.notifications.unshift({
+          id: Date.now(),
+          title: 'Wallet Credited',
+          message: `Successfully added ${appState.settings.currencySymbol}${amount.toFixed(2)} to your wallet balance.`,
+          type: 'wallet',
+          time: 'Just now',
+          isRead: false
+        });
+        refreshUserUI();
+        showToast(`Added ${appState.settings.currencySymbol}${amount} to your wallet!`, 'success');
       }
 
-      function setUserAuthTab(tab) {
+      function markAllNotificationsRead() {
+        appState.notifications.forEach(n => n.isRead = true);
+        refreshUserUI();
+        showToast('All notifications marked as read', 'success');
+      }
+
+      function markNotificationReadSingle(id) {
+        const found = appState.notifications.find(n => n.id === id);
+        if (found) found.isRead = true;
+        refreshUserUI();
+      }
+
+      function openUserModal(id) {
+        const m = document.getElementById(id);
+        if (m) m.classList.add('active');
+      }
+      function closeUserModal(id) {
+        const m = document.getElementById(id);
+        if (m) m.classList.remove('active');
+      }
+
+      // ==========================================
+      // BUG 3: ADMIN SETTINGS LIVE SAVE & REFLECTION
+      // ==========================================
+      function saveAdminSettingsLive() {
+        const sym = document.getElementById('set-currency-sym').value.trim() || '₹';
+        const code = document.getElementById('set-currency-code').value.trim().toUpperCase() || 'INR';
+        const name = document.getElementById('set-currency-name').value.trim() || 'Indian Rupee';
+        const site = document.getElementById('set-site-name').value.trim() || 'SMM Panel';
+        const tag = document.getElementById('set-site-tagline').value.trim() || 'Grow Your Social Media';
+
+        appState.settings.currencySymbol = sym;
+        appState.settings.currencyCode = code;
+        appState.settings.currencyName = name;
+        appState.settings.siteName = site;
+        appState.settings.siteTagline = tag;
+
+        // Persist to localStorage so page reloading retains new settings
+        try {
+          localStorage.setItem('smm_panel_settings', JSON.stringify(appState.settings));
+        } catch (e) {}
+
+        document.getElementById('live-site-name').textContent = site;
+        document.getElementById('live-site-tagline').textContent = tag;
+        document.getElementById('admin-brand-site-title').textContent = site;
+        document.querySelectorAll('.live-app-title').forEach(el => el.textContent = site);
+        document.querySelectorAll('.live-app-tagline').forEach(el => el.textContent = tag);
+
+        refreshUserUI();
+        showToast(`Settings Saved! Currency updated to ${sym} (${code}) across all pages.`, 'success');
+      }
+
+      function loadStoredSettings() {
+        try {
+          const stored = localStorage.getItem('smm_panel_settings');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            Object.assign(appState.settings, parsed);
+            if (document.getElementById('set-currency-sym')) document.getElementById('set-currency-sym').value = appState.settings.currencySymbol;
+            if (document.getElementById('set-currency-code')) document.getElementById('set-currency-code').value = appState.settings.currencyCode;
+            if (document.getElementById('set-currency-name')) document.getElementById('set-currency-name').value = appState.settings.currencyName;
+            if (document.getElementById('set-site-name')) document.getElementById('set-site-name').value = appState.settings.siteName;
+            if (document.getElementById('set-site-tagline')) document.getElementById('set-site-tagline').value = appState.settings.siteTagline;
+          }
+        } catch (e) {}
+      }
+
+      // User Auth Form
+      function toggleAuthTab(tab) {
         const isLogin = tab === 'login';
-        document.getElementById('user-tab-login').className = isLogin ? 'auth-switch-btn active' : 'auth-switch-btn';
-        document.getElementById('user-tab-reg').className = !isLogin ? 'auth-switch-btn active' : 'auth-switch-btn';
-        document.getElementById('user-auth-head').textContent = isLogin ? 'Welcome Back!' : 'Create Account';
-        document.getElementById('user-auth-desc').textContent = isLogin ? 'Sign in to your account to continue.' : 'Join thousands of creators and agencies';
-        document.getElementById('btn-user-submit-login').innerHTML = isLogin ? 'Login &rarr;' : 'Create Account &rarr;';
+        document.getElementById('auth-tab-login').className = isLogin ? 'auth-switch-btn active' : 'auth-switch-btn';
+        document.getElementById('auth-tab-reg').className = !isLogin ? 'auth-switch-btn active' : 'auth-switch-btn';
+        document.getElementById('auth-box-login').style.display = isLogin ? 'block' : 'none';
+        document.getElementById('auth-box-register').style.display = !isLogin ? 'block' : 'none';
       }
 
-      function togglePass(id) {
-        const el = document.getElementById(id);
-        if (el) el.type = el.type === 'password' ? 'text' : 'password';
-      }
-
-      // Installer step controller
-      let instCurrentStep = 1;
-
-      function goToStep(step) {
-        const curPane = document.getElementById(`pane-step-${instCurrentStep}`);
-        const nxtPane = document.getElementById(`pane-step-${step}`);
-        if (curPane && nxtPane) {
-          curPane.classList.remove('active');
-          nxtPane.classList.add('active');
+      function handleUserAuthSubmit(type) {
+        if (type === 'register') {
+          const name = document.getElementById('reg-name').value.trim() || 'New User';
+          const email = document.getElementById('reg-email').value.trim() || 'user@example.com';
+          appState.user = {
+            id: Math.floor(1000 + Math.random() * 9000),
+            name: name,
+            email: email,
+            balance: 0.00 // BUG 1 FIX: Strictly starts at 0.00
+          };
+          appState.notifications = [{
+            id: Date.now(),
+            title: `Welcome to ${appState.settings.siteName}!`,
+            message: `Account created successfully with ${appState.settings.currencySymbol}0.00 balance. Explore our services!`,
+            type: 'system',
+            time: 'Just now',
+            isRead: false
+          }];
+          appState.orders = [];
+          showToast(`Account created! Started with ${appState.settings.currencySymbol}0.00 balance.`, 'success');
+        } else {
+          showToast('Signed in successfully!', 'success');
         }
+        refreshUserUI();
+        switchMainView('user');
+      }
+
+      function handleAdminLogin() {
+        showToast('Authenticated as Super Administrator', 'success');
+        switchMainView('admin');
+      }
+
+      // Installer Wizard step controller
+      function goToWizardStep(step) {
         for (let i = 1; i <= 6; i++) {
-          const item = document.getElementById(`prog-step-${i}`);
-          if (!item) continue;
-          if (i < step) item.className = 'progress-step-item completed';
-          else if (i === step) item.className = 'progress-step-item active';
-          else item.className = 'progress-step-item';
+          const pane = document.getElementById(`wizard-pane-${i}`);
+          const stepItem = document.getElementById(`wizard-step-${i}`);
+          if (pane) pane.style.display = i === step ? 'block' : 'none';
+          if (stepItem) {
+            stepItem.className = i < step ? 'progress-step-item completed' : i === step ? 'progress-step-item active' : 'progress-step-item';
+          }
         }
-        instCurrentStep = step;
         if (typeof lucide !== 'undefined') lucide.createIcons();
       }
 
-      function testDatabaseConnection() {
-        const btn = document.getElementById('btn-inst-test-db');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="loading-spinner"></span> Testing Connection via PDO...';
-        setTimeout(() => {
-          btn.disabled = false;
-          btn.innerHTML = 'Test Connection &rarr;';
-          showToast('Database connection successfully verified via PDO!', 'success');
-          goToStep(3);
-        }, 800);
-      }
-
-      function runMigrationStep() {
-        const btn = document.getElementById('btn-inst-migrate');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="loading-spinner"></span> Creating 13 Tables...';
-        setTimeout(() => {
-          btn.disabled = false;
-          btn.innerHTML = 'Run Database Migration &rarr;';
-          showToast('All 13 tables & initial categories migrated successfully!', 'success');
-          goToStep(4);
-        }, 900);
-      }
-
-      function submitAdminStep() {
-        const pass = document.getElementById('inst-admin-pass').value;
-        const conf = document.getElementById('inst-admin-confirm').value;
-        if (pass !== conf) {
-          showToast('Passwords do not match!', 'error');
-          return;
-        }
-        showToast('Super Administrator account created and hashed!', 'success');
-        goToStep(5);
-      }
-
-      function submitSiteConfigStep() {
-        showToast('Configuration written and installed.lock created!', 'success');
-        authState.isInstallerLocked = true;
-        goToStep(6);
-      }
-
-      document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Everything on Load
+      window.addEventListener('DOMContentLoaded', () => {
+        loadStoredSettings();
+        init3DSwiper();
+        refreshUserUI();
         if (typeof lucide !== 'undefined') lucide.createIcons();
       });
     </script>

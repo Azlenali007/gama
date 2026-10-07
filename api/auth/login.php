@@ -25,46 +25,26 @@ try {
     $stmt->execute([':email' => $email]);
     $user = $stmt->fetch();
 
-    if ($user) {
-        // Password verification (fallback for plain demo)
-        $valid = password_verify($password, $user['password_hash']) || $password === 'password123';
-        if ($valid) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user'] = [
-                'id' => $user['id'],
-                'user_id_code' => $user['user_id_code'],
-                'name' => $user['name'],
-                'email' => $user['email'],
-                'phone' => $user['phone'],
-                'balance' => (float)$user['balance'],
-                'currency' => $user['currency'],
-                'role' => 'user'
-            ];
-            jsonResponse([
-                'success' => true,
-                'message' => 'Logged in successfully',
-                'user' => $_SESSION['user'],
-                'redirect' => '/user/dashboard.php'
-            ]);
+    if ($user && password_verify($password, $user['password_hash'])) {
+        if ($user['status'] !== 'active') {
+            jsonResponse(['success' => false, 'message' => 'Your account is suspended or inactive'], 403);
         }
-    }
 
-    // Demo convenience fallback if database is empty
-    if ($email === 'aarisali@gmail.com' || str_contains($email, '@')) {
-        $_SESSION['user_id'] = 1;
+        $_SESSION['user_id'] = (int)$user['id'];
+        $_SESSION['auth_role'] = 'user';
         $_SESSION['user'] = [
-            'id' => 1,
-            'user_id_code' => '#1024',
-            'name' => 'Aaris Ali',
-            'email' => $email,
-            'phone' => '+91 98765 43210',
-            'balance' => 850.50,
-            'currency' => 'INR',
+            'id' => (int)$user['id'],
+            'user_id_code' => $user['user_id_code'],
+            'name' => $user['name'],
+            'email' => $user['email'],
+            'phone' => $user['phone'],
+            'balance' => (float)$user['balance'],
+            'currency' => $user['currency'],
             'role' => 'user'
         ];
         jsonResponse([
             'success' => true,
-            'message' => 'Login successful',
+            'message' => 'Logged in successfully',
             'user' => $_SESSION['user'],
             'redirect' => '/user/dashboard.php'
         ]);
@@ -72,5 +52,5 @@ try {
 
     jsonResponse(['success' => false, 'message' => 'Invalid email or password'], 401);
 } catch (Exception $e) {
-    jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
+    jsonResponse(['success' => false, 'message' => 'Login error: ' . $e->getMessage()], 500);
 }

@@ -3,9 +3,13 @@
  * SMM Panel - Admin Module: Transactions Master Ledger
  * Protected Server-Side
  */
-require_once __DIR__ . '/../includes/admin-auth.php';
-$db = Database::getConnection();
+$adminPageTitle = 'Transactions Ledger';
+$activeAdminNav = 'transactions';
 
+require_once __DIR__ . '/../includes/admin-header.php';
+require_once __DIR__ . '/../includes/admin-navbar.php';
+
+$db = Database::getConnection();
 $transactions = $db->query("
     SELECT t.*, u.name as user_name, u.user_id_code 
     FROM transactions t 
@@ -13,31 +17,22 @@ $transactions = $db->query("
     ORDER BY t.id DESC
 ")->fetchAll();
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Transactions Ledger - <?= htmlspecialchars(APP_NAME) ?></title>
-  <link rel="stylesheet" href="/assets/css/style.css">
-  <link rel="stylesheet" href="/assets/css/admin.css">
-  <link rel="stylesheet" href="/assets/css/responsive.css">
-</head>
-<body>
-  <div class="app-container">
-    <div class="page-back-header">
-      <a href="/admin/dashboard.php" class="back-btn-link">
-        <span class="back-icon-circle"><i data-lucide="arrow-left"></i></span>
-        <span>Global Transactions Ledger</span>
-      </a>
-    </div>
 
-    <div class="data-table-card">
+<div class="admin-layout">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 900; color: #0f172a; margin: 0;">Transactions Ledger</h1>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">Audit wallet balance debits, credits, and order deductions.</p>
+    </div>
+  </div>
+
+  <div class="data-table-card">
+    <div class="table-responsive">
       <table class="app-table">
         <thead>
           <tr>
             <th>Txn ID</th>
-            <th>User</th>
+            <th>Customer</th>
             <th>Type</th>
             <th>Amount</th>
             <th>Description</th>
@@ -59,11 +54,19 @@ $transactions = $db->query("
               <tr>
                 <td>#<?= (int)$t['id'] ?></td>
                 <td><?= htmlspecialchars($t['user_name'] ?: 'User') ?> (<?= htmlspecialchars($t['user_id_code'] ?: '#') ?>)</td>
-                <td><span class="badge <?= $t['direction'] === 'credit' ? 'badge-success' : 'badge-danger' ?>"><?= htmlspecialchars($t['type']) ?></span></td>
-                <td><strong class="<?= $t['direction'] === 'credit' ? 'txn-amount-credit' : 'txn-amount-debit' ?>"><?= $t['direction'] === 'credit' ? '+' : '-' ?> <?= formatCurrency((float)$t['amount']) ?></strong></td>
-                <td><?= htmlspecialchars($t['title']) ?> (<?= htmlspecialchars($t['description'] ?: '') ?>)</td>
-                <td><?= formatCurrency((float)$t['balance_after']) ?></td>
-                <td><?= getFormattedDate($t['created_at']) ?></td>
+                <td>
+                  <span class="badge <?= $t['direction'] === 'credit' ? 'badge-success' : 'badge-danger' ?>">
+                    <?= htmlspecialchars(strtoupper($t['direction'])) ?>
+                  </span>
+                </td>
+                <td>
+                  <strong style="color: <?= $t['direction'] === 'credit' ? '#16a34a' : '#dc2626' ?>;">
+                    <?= $t['direction'] === 'credit' ? '+' : '-' ?><?= formatCurrency((float)$t['amount']) ?>
+                  </strong>
+                </td>
+                <td><?= htmlspecialchars($t['description'] ?: $t['title']) ?></td>
+                <td><strong><?= formatCurrency((float)$t['balance_after']) ?></strong></td>
+                <td><?= htmlspecialchars(getFormattedDate($t['created_at'])) ?></td>
               </tr>
             <?php endforeach; ?>
           <?php endif; ?>
@@ -71,8 +74,6 @@ $transactions = $db->query("
       </table>
     </div>
   </div>
+</div>
 
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script>lucide.createIcons();</script>
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/admin-footer.php'; ?>

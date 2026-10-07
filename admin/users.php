@@ -3,32 +3,27 @@
  * SMM Panel - Admin Module: Users Management
  * Protected Server-Side
  */
-require_once __DIR__ . '/../includes/admin-auth.php';
-$db = Database::getConnection();
+$adminPageTitle = 'User Accounts';
+$activeAdminNav = 'users';
 
+require_once __DIR__ . '/../includes/admin-header.php';
+require_once __DIR__ . '/../includes/admin-navbar.php';
+
+$db = Database::getConnection();
 $users = $db->query("SELECT * FROM users ORDER BY id DESC")->fetchAll();
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Users - <?= htmlspecialchars(APP_NAME) ?></title>
-  <link rel="stylesheet" href="/assets/css/style.css">
-  <link rel="stylesheet" href="/assets/css/admin.css">
-  <link rel="stylesheet" href="/assets/css/responsive.css">
-</head>
-<body>
-  <div class="app-container">
-    <div class="page-back-header">
-      <a href="/admin/dashboard.php" class="back-btn-link">
-        <span class="back-icon-circle"><i data-lucide="arrow-left"></i></span>
-        <span>User Accounts</span>
-      </a>
-      <span class="badge badge-info"><?= count($users) ?> Total Registered</span>
-    </div>
 
-    <div class="data-table-card">
+<div class="admin-layout">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 900; color: #0f172a; margin: 0;">User Accounts</h1>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">View registered users, wallet balances, and account statuses.</p>
+    </div>
+    <span class="badge badge-info" style="font-size: 13px; padding: 6px 14px;"><?= count($users) ?> Total Registered</span>
+  </div>
+
+  <div class="data-table-card">
+    <div class="table-responsive">
       <table class="app-table">
         <thead>
           <tr>
@@ -36,7 +31,7 @@ $users = $db->query("SELECT * FROM users ORDER BY id DESC")->fetchAll();
             <th>Full Name</th>
             <th>Email</th>
             <th>Phone</th>
-            <th>Balance</th>
+            <th>Wallet Balance</th>
             <th>Status</th>
             <th>Registered</th>
           </tr>
@@ -54,12 +49,12 @@ $users = $db->query("SELECT * FROM users ORDER BY id DESC")->fetchAll();
             <?php foreach ($users as $u): ?>
               <tr>
                 <td><strong><?= htmlspecialchars($u['user_id_code']) ?></strong></td>
-                <td><?= htmlspecialchars($u['name']) ?></td>
+                <td><strong><?= htmlspecialchars($u['name']) ?></strong></td>
                 <td><?= htmlspecialchars($u['email']) ?></td>
                 <td><?= htmlspecialchars($u['phone'] ?: 'N/A') ?></td>
                 <td><strong style="color: #2563eb;"><?= formatCurrency((float)$u['balance']) ?></strong></td>
-                <td><span class="badge <?= $u['status'] === 'active' ? 'badge-success' : 'badge-danger' ?>"><?= htmlspecialchars($u['status']) ?></span></td>
-                <td><span style="font-size: 12px; color: var(--text-muted);"><?= getFormattedDate($u['created_at']) ?></span></td>
+                <td><span class="badge badge-success"><?= htmlspecialchars($u['status']) ?></span></td>
+                <td><?= htmlspecialchars(getFormattedDate($u['created_at'])) ?></td>
               </tr>
             <?php endforeach; ?>
           <?php endif; ?>
@@ -67,8 +62,6 @@ $users = $db->query("SELECT * FROM users ORDER BY id DESC")->fetchAll();
       </table>
     </div>
   </div>
+</div>
 
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script>lucide.createIcons();</script>
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/admin-footer.php'; ?>

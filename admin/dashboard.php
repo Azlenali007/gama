@@ -35,41 +35,14 @@ $services = $db->query("
     ORDER BY s.id DESC LIMIT 10
 ")->fetchAll();
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - <?= htmlspecialchars(APP_NAME) ?></title>
-  
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
-  <link rel="stylesheet" href="/assets/css/style.css">
-  <link rel="stylesheet" href="/assets/css/user.css">
-  <link rel="stylesheet" href="/assets/css/admin.css">
-  <link rel="stylesheet" href="/assets/css/responsive.css">
-</head>
-<body>
-  <div class="app-container">
+$adminPageTitle = 'Dashboard Overview';
+$activeAdminNav = 'dashboard';
 
-    <!-- Header -->
-    <header class="app-header">
-      <div class="brand-badge">
-        <div class="brand-icon-box" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
-          <i data-lucide="shield-check"></i>
-        </div>
-        <div>
-          <div class="brand-title"><?= htmlspecialchars(APP_NAME) ?> <span class="admin-header-badge">Admin</span></div>
-          <div class="brand-subtitle">Master Administration Control</div>
-        </div>
-      </div>
+require_once __DIR__ . '/../includes/admin-header.php';
+require_once __DIR__ . '/../includes/admin-navbar.php';
+?>
 
-      <div class="header-actions">
-        <a href="/admin/settings.php" class="icon-btn" title="Settings"><i data-lucide="settings"></i></a>
-        <a href="/api/auth/logout.php" class="btn-secondary" style="font-size: 13px; color: #dc2626;">
-          <i data-lucide="log-out"></i> Logout
-        </a>
-      </div>
-    </header>
+<div class="admin-layout">
 
     <!-- Admin Stats Overview -->
     <div class="admin-stats-grid">
@@ -209,32 +182,34 @@ $services = $db->query("
       </div>
 
       <div class="data-table-card">
-        <table class="app-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Provider Name</th>
-              <th>API Endpoint</th>
-              <th>Balance</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php if (empty($providers)): ?>
-              <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">No providers configured yet. Click "+ Add Provider" to integrate your first SMM API.</td></tr>
-            <?php else: ?>
-              <?php foreach ($providers as $prov): ?>
-                <tr>
-                  <td>#<?= (int)$prov['id'] ?></td>
-                  <td><strong><?= htmlspecialchars($prov['name']) ?></strong></td>
-                  <td><code><?= htmlspecialchars($prov['api_url']) ?></code></td>
-                  <td><strong style="color: #10b981;">$<?= number_format((float)$prov['balance'], 2) ?> USD</strong></td>
-                  <td><span class="badge <?= $prov['status'] === 'active' ? 'badge-success' : 'badge-danger' ?>"><?= htmlspecialchars($prov['status']) ?></span></td>
-                </tr>
-              <?php endforeach; ?>
-            <?php endif; ?>
-          </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="app-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Provider Name</th>
+                <th>API Endpoint</th>
+                <th>Balance</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if (empty($providers)): ?>
+                <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">No providers configured yet. Click "+ Add Provider" to integrate your first SMM API.</td></tr>
+              <?php else: ?>
+                <?php foreach ($providers as $prov): ?>
+                  <tr>
+                    <td>#<?= (int)$prov['id'] ?></td>
+                    <td><strong><?= htmlspecialchars($prov['name']) ?></strong></td>
+                    <td><code><?= htmlspecialchars($prov['api_url']) ?></code></td>
+                    <td><strong style="color: #10b981;">$<?= number_format((float)$prov['balance'], 2) ?> USD</strong></td>
+                    <td><span class="badge <?= $prov['status'] === 'active' ? 'badge-success' : 'badge-danger' ?>"><?= htmlspecialchars($prov['status']) ?></span></td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -246,34 +221,36 @@ $services = $db->query("
       </div>
 
       <div class="data-table-card">
-        <table class="app-table">
-          <thead>
-            <tr>
-              <th>Order Code</th>
-              <th>User</th>
-              <th>Service</th>
-              <th>Quantity</th>
-              <th>Charge</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php if (empty($orders)): ?>
-              <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">No customer orders placed yet.</td></tr>
-            <?php else: ?>
-              <?php foreach ($orders as $o): ?>
-                <tr>
-                  <td><strong><?= htmlspecialchars($o['order_code']) ?></strong></td>
-                  <td><?= htmlspecialchars($o['user_name'] ?: 'User') ?> (<?= htmlspecialchars($o['user_id_code'] ?: '#') ?>)</td>
-                  <td><?= htmlspecialchars($o['service_name'] ?: 'Service') ?></td>
-                  <td><?= number_format($o['quantity']) ?></td>
-                  <td><?= formatCurrency((float)$o['charge']) ?></td>
-                  <td><span class="badge <?= getStatusBadgeClass($o['status']) ?>"><?= htmlspecialchars($o['status']) ?></span></td>
-                </tr>
-              <?php endforeach; ?>
-            <?php endif; ?>
-          </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="app-table">
+            <thead>
+              <tr>
+                <th>Order Code</th>
+                <th>User</th>
+                <th>Service</th>
+                <th>Quantity</th>
+                <th>Charge</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if (empty($orders)): ?>
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">No customer orders placed yet.</td></tr>
+              <?php else: ?>
+                <?php foreach ($orders as $o): ?>
+                  <tr>
+                    <td><strong><?= htmlspecialchars($o['order_code']) ?></strong></td>
+                    <td><?= htmlspecialchars($o['user_name'] ?: 'User') ?> (<?= htmlspecialchars($o['user_id_code'] ?: '#') ?>)</td>
+                    <td><?= htmlspecialchars($o['service_name'] ?: 'Service') ?></td>
+                    <td><?= number_format($o['quantity']) ?></td>
+                    <td><?= formatCurrency((float)$o['charge']) ?></td>
+                    <td><span class="badge <?= getStatusBadgeClass($o['status']) ?>"><?= htmlspecialchars($o['status']) ?></span></td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -285,45 +262,45 @@ $services = $db->query("
       </div>
 
       <div class="data-table-card">
-        <table class="app-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Service Name</th>
-              <th>Category</th>
-              <th>Rate / 1K</th>
-              <th>Mapped Provider</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php if (empty($services)): ?>
-              <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">No services in catalog yet.</td></tr>
-            <?php else: ?>
-              <?php foreach ($services as $srv): ?>
-                <tr>
-                  <td><?= (int)$srv['id'] ?></td>
-                  <td><strong><?= htmlspecialchars($srv['name']) ?></strong></td>
-                  <td><?= htmlspecialchars($srv['category_name'] ?: 'General') ?></td>
-                  <td><strong><?= formatCurrency((float)$srv['rate_per_1k']) ?></strong></td>
-                  <td><?= htmlspecialchars($srv['provider_name'] ?: 'Manual') ?></td>
-                  <td><span class="badge badge-success"><?= htmlspecialchars($srv['status']) ?></span></td>
-                </tr>
-              <?php endforeach; ?>
-            <?php endif; ?>
-          </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="app-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Service Name</th>
+                <th>Category</th>
+                <th>Rate / 1K</th>
+                <th>Mapped Provider</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if (empty($services)): ?>
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">No services in catalog yet.</td></tr>
+              <?php else: ?>
+                <?php foreach ($services as $srv): ?>
+                  <tr>
+                    <td><?= (int)$srv['id'] ?></td>
+                    <td><strong><?= htmlspecialchars($srv['name']) ?></strong></td>
+                    <td><?= htmlspecialchars($srv['category_name'] ?: 'General') ?></td>
+                    <td><strong><?= formatCurrency((float)$srv['rate_per_1k']) ?></strong></td>
+                    <td><?= htmlspecialchars($srv['provider_name'] ?: 'Manual') ?></td>
+                    <td><span class="badge badge-success"><?= htmlspecialchars($srv['status']) ?></span></td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-  </div>
+</div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="/assets/js/swiper-init.js"></script>
-  <script src="/assets/js/animations.js"></script>
-  <script src="/assets/js/admin.js"></script>
-  <script src="/assets/js/app.js"></script>
-</body>
-</html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script src="/assets/js/swiper-init.js"></script>
+<script src="/assets/js/animations.js"></script>
+<script src="/assets/js/admin.js"></script>
+
+<?php require_once __DIR__ . '/../includes/admin-footer.php'; ?>

@@ -31,23 +31,35 @@ try {
     $userIdCode = '#' . mt_rand(1000, 9999);
     $hash = password_hash($password, PASSWORD_DEFAULT);
 
-    $stmt = $db->prepare("INSERT INTO users (user_id_code, name, email, password_hash, balance) VALUES (:code, :name, :email, :pwd, 0.00)");
+    $currencyCode = getSetting('currency_code', 'INR');
+    $stmt = $db->prepare("INSERT INTO users (user_id_code, name, email, password_hash, balance, currency, status, email_verified) VALUES (:code, :name, :email, :pwd, 0.00, :curr, 'active', 1)");
     $stmt->execute([
         ':code' => $userIdCode,
         ':name' => $name,
         ':email' => $email,
-        ':pwd' => $hash
+        ':pwd' => $hash,
+        ':curr' => $currencyCode
     ]);
 
-    $newId = $db->lastInsertId();
+    $newId = (int)$db->lastInsertId();
+
+    createNotification(
+        $newId,
+        'Welcome to ' . getSetting('site_name', APP_NAME) . '!',
+        'Your account has been successfully created. Explore our premium SMM services and add funds to place your first order.',
+        'system',
+        '/user/dashboard.php'
+    );
+
     $_SESSION['user_id'] = $newId;
+    $_SESSION['auth_role'] = 'user';
     $_SESSION['user'] = [
         'id' => $newId,
         'user_id_code' => $userIdCode,
         'name' => $name,
         'email' => $email,
         'balance' => 0.00,
-        'currency' => 'INR',
+        'currency' => $currencyCode,
         'role' => 'user'
     ];
 
@@ -58,21 +70,5 @@ try {
         'redirect' => '/user/dashboard.php'
     ]);
 } catch (Exception $e) {
-    // Demo fallback response
-    $_SESSION['user_id'] = 2;
-    $_SESSION['user'] = [
-        'id' => 2,
-        'user_id_code' => '#' . mt_rand(1000, 9999),
-        'name' => $name,
-        'email' => $email,
-        'balance' => 0.00,
-        'currency' => 'INR',
-        'role' => 'user'
-    ];
-    jsonResponse([
-        'success' => true,
-        'message' => 'Account created successfully (Demo Mode)',
-        'user' => $_SESSION['user'],
-        'redirect' => '/user/dashboard.php'
-    ]);
+    jsonResponse(['success' => false, 'message' => 'Registration failed: ' . $e->getMessage()], 500);
 }

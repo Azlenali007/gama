@@ -98,6 +98,8 @@ class ProviderManager {
 
             if (isset($statusResult['status'])) {
                 $mappedStatus = self::mapProviderStatus($statusResult['status']);
+                $prevStatus = $order['status'];
+
                 $update = $db->prepare("
                     UPDATE orders
                     SET status = :status,
@@ -114,6 +116,23 @@ class ProviderManager {
                     ':start_count' => $statusResult['start_count'] ?? 0,
                     ':id' => $orderId
                 ]);
+
+                // Trigger user notification if status changed
+                if ($mappedStatus !== $prevStatus && function_exists('createNotification')) {
+                    $title = match ($mappedStatus) {
+                        ORDER_STATUS_COMPLETED => "Order {$order['order_code']} Completed",
+                        ORDER_STATUS_CANCELLED => "Order {$order['order_code']} Cancelled",
+                        ORDER_STATUS_PARTIAL => "Order {$order['order_code']} Partially Completed",
+                        default => "Order {$order['order_code']} Status Updated"
+                    };
+                    createNotification(
+                        (int)$order['user_id'],
+                        $title,
+                        "Your order status is now " . strtoupper($mappedStatus) . ".",
+                        'order',
+                        '/user/dashboard.php'
+                    );
+                }
 
                 return ['success' => true, 'status' => $mappedStatus, 'raw' => $statusResult];
             }

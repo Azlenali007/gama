@@ -3,9 +3,13 @@
  * SMM Panel - Admin Module: Orders Management
  * Protected Server-Side
  */
-require_once __DIR__ . '/../includes/admin-auth.php';
-$db = Database::getConnection();
+$adminPageTitle = 'Orders Management';
+$activeAdminNav = 'orders';
 
+require_once __DIR__ . '/../includes/admin-header.php';
+require_once __DIR__ . '/../includes/admin-navbar.php';
+
+$db = Database::getConnection();
 $orders = $db->query("
     SELECT o.*, u.name as user_name, u.user_id_code, s.name as service_name
     FROM orders o
@@ -14,39 +18,30 @@ $orders = $db->query("
     ORDER BY o.id DESC
 ")->fetchAll();
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Orders Management - <?= htmlspecialchars(APP_NAME) ?></title>
-  <link rel="stylesheet" href="/assets/css/style.css">
-  <link rel="stylesheet" href="/assets/css/admin.css">
-  <link rel="stylesheet" href="/assets/css/responsive.css">
-</head>
-<body>
-  <div class="app-container">
-    <div class="page-back-header">
-      <a href="/admin/dashboard.php" class="back-btn-link">
-        <span class="back-icon-circle"><i data-lucide="arrow-left"></i></span>
-        <span>Orders Management</span>
-      </a>
-      <a href="/cron/cron.php?cron_key=smm_cron_secret_secure_key_2025" target="_blank" class="btn-primary" style="width: auto; padding: 10px 18px;">
-        <i data-lucide="refresh-cw"></i> Sync with Providers
-      </a>
-    </div>
 
-    <div class="data-table-card">
+<div class="admin-layout">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 900; color: #0f172a; margin: 0;">Orders Management</h1>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">Review orders, delivery statuses, and provider automation.</p>
+    </div>
+    <a href="/cron/cron.php?key=<?= urlencode(getSetting('cron_secret_key', 'smm_cron_secret_secure_key_2025')) ?>" target="_blank" class="btn-primary" style="width: auto; padding: 10px 18px;">
+      <i data-lucide="refresh-cw"></i> Sync with Providers
+    </a>
+  </div>
+
+  <div class="data-table-card">
+    <div class="table-responsive">
       <table class="app-table">
         <thead>
           <tr>
             <th>Order Code</th>
-            <th>User</th>
+            <th>Customer</th>
             <th>Service</th>
             <th>Target Link</th>
             <th>Quantity</th>
             <th>Charge</th>
-            <th>Provider ID</th>
+            <th>Provider Ref</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -64,11 +59,11 @@ $orders = $db->query("
               <tr>
                 <td><strong><?= htmlspecialchars($o['order_code']) ?></strong></td>
                 <td><?= htmlspecialchars($o['user_name'] ?: 'User') ?> (<?= htmlspecialchars($o['user_id_code'] ?: '#') ?>)</td>
-                <td><?= htmlspecialchars($o['service_name'] ?: 'Service') ?></td>
-                <td><span style="color: var(--primary-blue); font-size: 12px;"><?= htmlspecialchars(substr($o['target_link'], 0, 35)) ?>...</span></td>
+                <td><strong><?= htmlspecialchars($o['service_name'] ?: 'Service') ?></strong></td>
+                <td><a href="<?= htmlspecialchars($o['target_link']) ?>" target="_blank" style="color: var(--primary-blue); font-size: 13px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; display: inline-block; white-space: nowrap; vertical-align: middle;">Link &nearr;</a></td>
                 <td><?= number_format($o['quantity']) ?></td>
-                <td><?= formatCurrency((float)$o['charge']) ?></td>
-                <td><code><?= htmlspecialchars($o['provider_order_id'] ?: 'Pending') ?></code></td>
+                <td><strong><?= formatCurrency((float)$o['charge']) ?></strong></td>
+                <td><?= htmlspecialchars($o['provider_order_id'] ?: 'Direct') ?></td>
                 <td><span class="badge <?= getStatusBadgeClass($o['status']) ?>"><?= htmlspecialchars($o['status']) ?></span></td>
               </tr>
             <?php endforeach; ?>
@@ -77,8 +72,6 @@ $orders = $db->query("
       </table>
     </div>
   </div>
+</div>
 
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script>lucide.createIcons();</script>
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/admin-footer.php'; ?>

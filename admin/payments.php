@@ -3,9 +3,13 @@
  * SMM Panel - Admin Module: Payments
  * Protected Server-Side
  */
-require_once __DIR__ . '/../includes/admin-auth.php';
-$db = Database::getConnection();
+$adminPageTitle = 'Payments Logs';
+$activeAdminNav = 'payments';
 
+require_once __DIR__ . '/../includes/admin-header.php';
+require_once __DIR__ . '/../includes/admin-navbar.php';
+
+$db = Database::getConnection();
 $payments = $db->query("
     SELECT p.*, u.name as user_name, u.user_id_code 
     FROM payments p 
@@ -13,31 +17,22 @@ $payments = $db->query("
     ORDER BY p.id DESC
 ")->fetchAll();
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payments - <?= htmlspecialchars(APP_NAME) ?></title>
-  <link rel="stylesheet" href="/assets/css/style.css">
-  <link rel="stylesheet" href="/assets/css/admin.css">
-  <link rel="stylesheet" href="/assets/css/responsive.css">
-</head>
-<body>
-  <div class="app-container">
-    <div class="page-back-header">
-      <a href="/admin/dashboard.php" class="back-btn-link">
-        <span class="back-icon-circle"><i data-lucide="arrow-left"></i></span>
-        <span>Payments Gateway Logs</span>
-      </a>
-    </div>
 
-    <div class="data-table-card">
+<div class="admin-layout">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 900; color: #0f172a; margin: 0;">Payment Transactions</h1>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">View deposits, Razorpay gateway verifications, and payment statuses.</p>
+    </div>
+  </div>
+
+  <div class="data-table-card">
+    <div class="table-responsive">
       <table class="app-table">
         <thead>
           <tr>
             <th>Txn Code</th>
-            <th>User</th>
+            <th>Customer</th>
             <th>Amount</th>
             <th>Gateway</th>
             <th>Gateway ID</th>
@@ -59,11 +54,11 @@ $payments = $db->query("
               <tr>
                 <td><code><?= htmlspecialchars($p['transaction_code']) ?></code></td>
                 <td><?= htmlspecialchars($p['user_name'] ?: 'User') ?> (<?= htmlspecialchars($p['user_id_code'] ?: '#') ?>)</td>
-                <td><strong style="color: #10b981;"><?= formatCurrency((float)$p['amount']) ?></strong></td>
+                <td><strong style="color: #16a34a;"><?= formatCurrency((float)$p['amount']) ?></strong></td>
                 <td><?= htmlspecialchars($p['payment_method']) ?></td>
-                <td><code><?= htmlspecialchars($p['gateway_payment_id'] ?: 'Pending') ?></code></td>
-                <td><span class="badge <?= getStatusBadgeClass($p['status']) ?>"><?= htmlspecialchars($p['status']) ?></span></td>
-                <td><?= getFormattedDate($p['created_at']) ?></td>
+                <td><code style="font-size: 12px;"><?= htmlspecialchars($p['gateway_payment_id'] ?: 'Pending') ?></code></td>
+                <td><span class="badge <?= $p['status'] === 'completed' ? 'badge-success' : 'badge-warning' ?>"><?= htmlspecialchars($p['status']) ?></span></td>
+                <td><?= htmlspecialchars(getFormattedDate($p['created_at'])) ?></td>
               </tr>
             <?php endforeach; ?>
           <?php endif; ?>
@@ -71,8 +66,6 @@ $payments = $db->query("
       </table>
     </div>
   </div>
+</div>
 
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script>lucide.createIcons();</script>
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/admin-footer.php'; ?>

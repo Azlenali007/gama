@@ -46,7 +46,7 @@ try {
     $userStmt = $db->prepare("SELECT balance FROM users WHERE id = :id LIMIT 1");
     $userStmt->execute([':id' => $currentUser['id']]);
     $userRow = $userStmt->fetch();
-    $currentBal = $userRow ? (float)$userRow['balance'] : ($currentUser['balance'] ?? 850.50);
+    $currentBal = $userRow ? (float)$userRow['balance'] : (float)($currentUser['balance'] ?? 0.00);
 
     if ($currentBal < $charge) {
         jsonResponse([
@@ -95,6 +95,15 @@ try {
 
     $db->commit();
 
+    // Trigger Notification for user
+    createNotification(
+        $currentUser['id'],
+        "Order {$orderCode} Received",
+        "Your order for {$service['name']} has been placed successfully for " . formatCurrency($charge) . ".",
+        'order',
+        '/user/orders.php'
+    );
+
     // 6. Forward Order to SMM Provider in background/sync
     $providerResult = ProviderManager::forwardOrder((int)$newOrderId);
 
@@ -117,20 +126,5 @@ try {
     if (isset($db) && $db->inTransaction()) {
         $db->rollBack();
     }
-    
-    // Demo mode execution fallback
-    $charge = round((35.00 / 1000) * $quantity, 2);
-    $newBal = max(0, ($currentUser['balance'] ?? 850.50) - $charge);
-    $_SESSION['user']['balance'] = $newBal;
-    if (isset($_SESSION['demo_user'])) {
-        $_SESSION['demo_user']['balance'] = $newBal;
-    }
-
-    jsonResponse([
-        'success' => true,
-        'message' => 'Order placed successfully (Demo Engine)',
-        'order_code' => '#' . mt_rand(10255, 99999),
-        'charge' => $charge,
-        'new_balance' => $newBal
-    ]);
+    jsonResponse(['success' => false, 'message' => 'Order failed: ' . $e->getMessage()], 500);
 }

@@ -2,92 +2,76 @@
 /**
  * SMM Panel - Admin Module: Provider Services Mapping
  */
-require_once __DIR__ . '/../includes/admin-auth.php';
-$providerId = (int)($_GET['id'] ?? 1);
+$adminPageTitle = 'Provider Services Mapping';
+$activeAdminNav = 'provider-services';
+
+require_once __DIR__ . '/../includes/admin-header.php';
+require_once __DIR__ . '/../includes/admin-navbar.php';
+
+$db = Database::getConnection();
+$providerId = (int)($_GET['provider_id'] ?? 1);
+
+$provider = $db->prepare("SELECT * FROM providers WHERE id = :id LIMIT 1");
+$provider->execute([':id' => $providerId]);
+$prov = $provider->fetch();
+
+$mappings = $db->query("
+    SELECT ps.*, p.name as provider_name 
+    FROM provider_services ps 
+    JOIN providers p ON ps.provider_id = p.id 
+    ORDER BY ps.id DESC LIMIT 50
+")->fetchAll();
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Provider Service Mapping - <?= htmlspecialchars(APP_NAME) ?></title>
-  <link rel="stylesheet" href="/assets/css/style.css">
-  <link rel="stylesheet" href="/assets/css/admin.css">
-  <link rel="stylesheet" href="/assets/css/responsive.css">
-</head>
-<body>
-  <div class="app-container">
-    <div class="page-back-header">
-      <a href="/admin/providers.php" class="back-btn-link">
-        <span class="back-icon-circle"><i data-lucide="arrow-left"></i></span>
-        <span>Provider Services Mapping</span>
-      </a>
-      <span class="badge badge-success">Provider #<?= $providerId ?> Synced</span>
+
+<div class="admin-layout">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 900; color: #0f172a; margin: 0;">Provider Services Catalog</h1>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">Map remote provider service IDs to internal customer packages.</p>
     </div>
+    <span class="badge badge-primary" style="font-size: 13px; padding: 6px 14px;">
+      <?= htmlspecialchars($prov['name'] ?? 'All Providers') ?>
+    </span>
+  </div>
 
-    <div class="data-table-card">
-      <div class="data-table-header">
-        <div>
-          <h3 style="font-size: 17px; font-weight: 800;">Remote Services on GlobalSMM API</h3>
-          <p style="font-size: 12px; color: var(--text-muted);">Map remote service IDs to our customer catalog</p>
-        </div>
-      </div>
-
+  <div class="data-table-card">
+    <div class="table-responsive">
       <table class="app-table">
         <thead>
           <tr>
-            <th>Remote ID</th>
+            <th>Provider</th>
+            <th>Remote Service ID</th>
             <th>Remote Service Name</th>
-            <th>Category</th>
-            <th>API Cost / 1K</th>
+            <th>Provider Rate</th>
             <th>Min / Max</th>
-            <th>Mapped Our Service</th>
-            <th>Action</th>
+            <th>Sync Status</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td><code>101</code></td>
-            <td><strong>Instagram Followers HQ Instant</strong></td>
-            <td>Instagram</td>
-            <td>$0.28 USD</td>
-            <td>1K / 1M</td>
-            <td><strong style="color: #2563eb;">Instagram Followers (₹35)</strong></td>
-            <td><span class="badge badge-success">Mapped</span></td>
-          </tr>
-          <tr>
-            <td><code>102</code></td>
-            <td><strong>Instagram Likes Fast Real</strong></td>
-            <td>Instagram</td>
-            <td>$0.14 USD</td>
-            <td>100 / 500K</td>
-            <td><strong style="color: #2563eb;">Instagram Likes (₹20)</strong></td>
-            <td><span class="badge badge-success">Mapped</span></td>
-          </tr>
-          <tr>
-            <td><code>103</code></td>
-            <td><strong>Instagram Video Views Super Fast</strong></td>
-            <td>Instagram</td>
-            <td>$0.09 USD</td>
-            <td>500 / 2M</td>
-            <td><strong style="color: #2563eb;">Instagram Views (₹15)</strong></td>
-            <td><span class="badge badge-success">Mapped</span></td>
-          </tr>
-          <tr>
-            <td><code>104</code></td>
-            <td><strong>Instagram Custom Comments HQ</strong></td>
-            <td>Instagram</td>
-            <td>$0.42 USD</td>
-            <td>10 / 50K</td>
-            <td><strong style="color: #2563eb;">Instagram Comments (₹50)</strong></td>
-            <td><span class="badge badge-success">Mapped</span></td>
-          </tr>
+          <?php if (empty($mappings)): ?>
+            <tr>
+              <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                <i data-lucide="refresh-cw" style="width: 40px; height: 40px; margin-bottom: 8px; color: var(--text-light);"></i>
+                <p style="font-weight: 700;">No services imported yet</p>
+                <span style="font-size: 13px;">Add an API provider with a valid API key, then run service synchronization.</span>
+              </td>
+            </tr>
+          <?php else: ?>
+            <?php foreach ($mappings as $m): ?>
+              <tr>
+                <td><?= htmlspecialchars($m['provider_name']) ?></td>
+                <td><code><?= htmlspecialchars($m['remote_service_id']) ?></code></td>
+                <td><strong><?= htmlspecialchars($m['name']) ?></strong></td>
+                <td>$<?= number_format((float)$m['rate'], 4) ?></td>
+                <td><?= number_format($m['min']) ?> - <?= number_format($m['max']) ?></td>
+                <td><span class="badge badge-success"><?= htmlspecialchars($m['sync_status']) ?></span></td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
         </tbody>
       </table>
     </div>
   </div>
+</div>
 
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script>lucide.createIcons();</script>
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/admin-footer.php'; ?>

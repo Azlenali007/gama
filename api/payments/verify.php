@@ -29,7 +29,7 @@ try {
     $userStmt = $db->prepare("SELECT balance FROM users WHERE id = :id LIMIT 1");
     $userStmt->execute([':id' => $currentUser['id']]);
     $userRow = $userStmt->fetch();
-    $currentBal = $userRow ? (float)$userRow['balance'] : ($currentUser['balance'] ?? 850.50);
+    $currentBal = $userRow ? (float)$userRow['balance'] : (float)($currentUser['balance'] ?? 0.00);
 
     $newBal = $currentBal + $amount;
 
@@ -64,6 +64,15 @@ try {
 
     $db->commit();
 
+    // Trigger Notification
+    createNotification(
+        $currentUser['id'],
+        'Wallet Credited',
+        'Successfully added ' . formatCurrency($amount) . ' to your wallet via Razorpay.',
+        'wallet',
+        '/user/dashboard.php'
+    );
+
     // Update session
     $_SESSION['user']['balance'] = $newBal;
     if (isset($_SESSION['demo_user'])) {
@@ -82,18 +91,5 @@ try {
     if (isset($db) && $db->inTransaction()) {
         $db->rollBack();
     }
-
-    $newBal = ($currentUser['balance'] ?? 850.50) + $amount;
-    $_SESSION['user']['balance'] = $newBal;
-    if (isset($_SESSION['demo_user'])) {
-        $_SESSION['demo_user']['balance'] = $newBal;
-    }
-
-    jsonResponse([
-        'success' => true,
-        'message' => 'Payment successful! (Demo Engine)',
-        'credited_amount' => $amount,
-        'new_balance' => $newBal,
-        'payment_id' => $paymentId
-    ]);
+    jsonResponse(['success' => false, 'message' => 'Payment verification failed: ' . $e->getMessage()], 500);
 }

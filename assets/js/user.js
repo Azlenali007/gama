@@ -2,9 +2,13 @@
  * SMM Panel - User Dashboard Business Logic
  */
 
-let selectedServiceRate = 35.00; // Default: Instagram Followers ₹35 / 1K
+let selectedServiceRate = 35.00;
 let selectedServiceName = 'Instagram Followers';
 let selectedCategorySlug = 'instagram';
+
+function getAppCurrencySymbol() {
+  return window.APP_CURRENCY_SYMBOL || (document.querySelector('.curr-sym') ? document.querySelector('.curr-sym').textContent.trim() : '₹');
+}
 
 // Initialize User Events
 function initUserModule() {
@@ -43,7 +47,7 @@ function initServiceSelectors() {
       const qtyInput = document.getElementById('order-quantity-input');
 
       if (nameElem) nameElem.textContent = name;
-      if (rateElem) rateElem.textContent = `₹${rate} / 1K`;
+      if (rateElem) rateElem.textContent = `${getAppCurrencySymbol()}${rate} / 1K`;
       if (badgesElem) badgesElem.textContent = badges;
       if (minMaxElem) minMaxElem.textContent = `Min: ${min} | Max: ${max}`;
       if (qtyInput) {
@@ -126,7 +130,7 @@ function calculateTotalPrice() {
 
   const qty = parseInt(qtyInput.value) || 0;
   const total = ((selectedServiceRate / 1000) * qty).toFixed(2);
-  priceDisplay.textContent = `₹${total}`;
+  priceDisplay.textContent = `${getAppCurrencySymbol()}${total}`;
 }
 
 /**
@@ -150,10 +154,10 @@ async function placeNewOrder() {
 
   const charge = ((selectedServiceRate / 1000) * qty).toFixed(2);
   const currentBalElem = document.getElementById('header-balance-display');
-  const currentBal = parseFloat(currentBalElem ? currentBalElem.textContent.replace('₹', '') : '850.50');
+  const currentBal = parseFloat(currentBalElem ? currentBalElem.textContent.replace(/[^\d.-]/g, '') : '0.00');
 
   if (currentBal < parseFloat(charge)) {
-    showToast(`Insufficient funds! Order costs ₹${charge}, your balance is ₹${currentBal}`, 'error');
+    showToast(`Insufficient funds! Order costs ${getAppCurrencySymbol()}${charge}, your balance is ${getAppCurrencySymbol()}${currentBal.toFixed(2)}`, 'error');
     return;
   }
 
@@ -227,7 +231,7 @@ function initAddFundsModule() {
 
       const payBtn = document.getElementById('btn-pay-now-funds');
       if (payBtn) {
-        payBtn.innerHTML = `Pay Now ₹${val} &rarr;`;
+        payBtn.innerHTML = `Pay Now ${getAppCurrencySymbol()}${val} &rarr;`;
       }
     });
   });
@@ -240,10 +244,10 @@ async function triggerAddFundsPayment() {
     payBtn.innerHTML = '<span class="loading-spinner"></span> Connecting Gateway...';
   }
 
-  showToast(`Redirecting to Razorpay Secure Gateway for ₹${selectedFundAmount}...`, 'info');
+  showToast(`Connecting Secure Gateway for ${getAppCurrencySymbol()}${selectedFundAmount}...`, 'info');
 
   setTimeout(async () => {
-    // Simulate instant secure payment verification
+    // Instant secure payment verification
     try {
       await fetch('/api/payments/verify.php', {
         method: 'POST',
@@ -253,15 +257,15 @@ async function triggerAddFundsPayment() {
     } catch (e) {}
 
     const balElem = document.getElementById('header-balance-display');
-    const curBal = parseFloat(balElem ? balElem.textContent.replace('₹', '') : '850.50');
+    const curBal = parseFloat(balElem ? balElem.textContent.replace(/[^\d.-]/g, '') : '0.00');
     const newBal = (curBal + selectedFundAmount).toFixed(2);
 
     updateGlobalBalance(newBal);
-    showToast(`₹${selectedFundAmount} added successfully to your wallet!`, 'success');
+    showToast(`${getAppCurrencySymbol()}${selectedFundAmount} added successfully to your wallet!`, 'success');
 
     if (payBtn) {
       payBtn.disabled = false;
-      payBtn.innerHTML = `Pay Now ₹${selectedFundAmount} &rarr;`;
+      payBtn.innerHTML = `Pay Now ${getAppCurrencySymbol()}${selectedFundAmount} &rarr;`;
     }
 
     setTimeout(() => {
@@ -273,7 +277,7 @@ async function triggerAddFundsPayment() {
 function updateGlobalBalance(newBal) {
   const balDisplays = document.querySelectorAll('.live-user-balance');
   balDisplays.forEach(el => {
-    el.textContent = `₹${newBal}`;
+    el.textContent = `${getAppCurrencySymbol()}${Number(newBal).toFixed(2)}`;
   });
 }
 
@@ -290,7 +294,7 @@ function appendOrderToDOM(order) {
       </div>
       <div>
         <div class="order-meta-title">${order.name}</div>
-        <div class="order-meta-sub">${order.qty} &bull; ₹${order.charge}</div>
+        <div class="order-meta-sub">${order.qty} &bull; ${getAppCurrencySymbol()}${order.charge}</div>
       </div>
     </div>
     <div style="text-align: right;">

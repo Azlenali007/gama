@@ -43,19 +43,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['user_register'])) {
                     $userCode = '#' . mt_rand(1000, 9999);
                     $hash = password_hash($password, PASSWORD_DEFAULT);
 
+                    $currencyCode = getSetting('currency_code', 'INR');
                     $stmt = $db->prepare("
                         INSERT INTO users (user_id_code, name, email, phone, password_hash, balance, currency, status, email_verified)
-                        VALUES (:code, :name, :email, :phone, :pwd, 0.00, 'INR', 'active', 1)
+                        VALUES (:code, :name, :email, :phone, :pwd, 0.00, :curr, 'active', 1)
                     ");
                     $stmt->execute([
                         ':code' => $userCode,
                         ':name' => $name,
                         ':email' => $email,
                         ':phone' => $phone ?: null,
-                        ':pwd' => $hash
+                        ':pwd' => $hash,
+                        ':curr' => $currencyCode
                     ]);
 
                     $newId = (int)$db->lastInsertId();
+
+                    // Create Welcome Notification in database
+                    createNotification(
+                        $newId,
+                        'Welcome to ' . getSetting('site_name', APP_NAME) . '!',
+                        'Your account has been successfully created. Explore our premium SMM services and add funds to place your first order.',
+                        'system',
+                        '/user/dashboard.php'
+                    );
+
                     $newUser = [
                         'id' => $newId,
                         'user_id_code' => $userCode,
@@ -63,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['user_register'])) {
                         'email' => $email,
                         'phone' => $phone,
                         'balance' => 0.00,
-                        'currency' => 'INR',
+                        'currency' => $currencyCode,
                         'status' => 'active'
                     ];
 

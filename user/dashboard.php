@@ -47,9 +47,9 @@ $ticketStmt = $db->prepare("SELECT * FROM tickets WHERE user_id = :uid ORDER BY 
 $ticketStmt->execute([':uid' => $user['id']]);
 $userTickets = $ticketStmt->fetchAll();
 
-// 5. Fetch announcements / notifications
-$notifStmt = $db->query("SELECT * FROM announcements WHERE is_active = 1 ORDER BY id DESC LIMIT 10");
-$notifications = $notifStmt->fetchAll();
+// 5. Fetch real user notifications
+$userNotifications = getUserNotifications((int)$user['id'], 20);
+$unreadNotifCount = getUnreadNotificationCount((int)$user['id']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -104,7 +104,7 @@ $notifications = $notifStmt->fetchAll();
       <div class="header-actions">
         <button class="icon-btn" onclick="expandCardToPage(this, 'page-notifications')" title="Notifications">
           <i data-lucide="bell"></i>
-          <?php if (!empty($notifications)): ?><span class="icon-badge-dot"></span><?php endif; ?>
+          <?php if ($unreadNotifCount > 0): ?><span class="icon-badge-dot"></span><?php endif; ?>
         </button>
         <button class="icon-btn" onclick="expandCardToPage(this, 'page-tickets')" title="Support Tickets">
           <i data-lucide="message-square"></i>
@@ -330,7 +330,7 @@ $notifications = $notifStmt->fetchAll();
 
               <div class="total-price-bar">
                 <span class="total-price-label">Total Price</span>
-                <span class="total-price-val" id="calculated-order-price">₹0.00</span>
+                <span class="total-price-val" id="calculated-order-price"><?= htmlspecialchars(getCurrencySymbol()) ?>0.00</span>
               </div>
 
               <button type="button" class="btn-primary" id="btn-place-order" onclick="placeNewOrder()">
@@ -365,12 +365,12 @@ $notifications = $notifStmt->fetchAll();
 
       <label class="form-field-label" style="font-size: 15px; margin-bottom: 12px;">Select Amount</label>
       <div class="amount-chips-grid">
-        <div class="amount-chip" data-amount="100">₹100</div>
-        <div class="amount-chip selected" data-amount="200">₹200</div>
-        <div class="amount-chip" data-amount="500">₹500</div>
-        <div class="amount-chip" data-amount="1000">₹1,000</div>
-        <div class="amount-chip" data-amount="2000">₹2,000</div>
-        <div class="amount-chip" data-amount="5000">₹5,000</div>
+        <div class="amount-chip" data-amount="100"><?= htmlspecialchars(getCurrencySymbol()) ?>100</div>
+        <div class="amount-chip selected" data-amount="200"><?= htmlspecialchars(getCurrencySymbol()) ?>200</div>
+        <div class="amount-chip" data-amount="500"><?= htmlspecialchars(getCurrencySymbol()) ?>500</div>
+        <div class="amount-chip" data-amount="1000"><?= htmlspecialchars(getCurrencySymbol()) ?>1,000</div>
+        <div class="amount-chip" data-amount="2000"><?= htmlspecialchars(getCurrencySymbol()) ?>2,000</div>
+        <div class="amount-chip" data-amount="5000"><?= htmlspecialchars(getCurrencySymbol()) ?>5,000</div>
       </div>
 
       <label class="form-field-label" style="font-size: 15px; margin-bottom: 12px;">Payment Method</label>
@@ -383,7 +383,7 @@ $notifications = $notifStmt->fetchAll();
       </div>
 
       <button type="button" class="btn-primary" id="btn-pay-now-funds" onclick="triggerAddFundsPayment()">
-        Pay Now ₹200 &rarr;
+        Pay Now <?= htmlspecialchars(getCurrencySymbol()) ?>200 &rarr;
       </button>
 
       <div class="secure-encryption-note">
@@ -579,24 +579,43 @@ $notifications = $notifStmt->fetchAll();
     <!-- PAGE 8: NOTIFICATIONS -->
     <div id="page-notifications" class="page-view-container">
       <div class="page-back-header">
-        <button class="back-btn-link">
+        <button class="back-btn-link" onclick="contractPageToCard()">
           <span class="back-icon-circle"><i data-lucide="arrow-left"></i></span>
           <span>Notifications</span>
         </button>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <?php if ($unreadNotifCount > 0): ?>
+            <a href="/user/notifications.php?action=read_all" class="btn-secondary" style="font-size: 11px; padding: 6px 12px;">
+              Mark All Read
+            </a>
+          <?php endif; ?>
+          <a href="/user/notifications.php" class="btn-secondary" style="font-size: 11px; padding: 6px 12px;">
+            Full Page &rarr;
+          </a>
+        </div>
       </div>
 
       <div class="notifications-list-wrap">
-        <?php if (empty($notifications)): ?>
+        <?php if (empty($userNotifications)): ?>
           <div class="empty-state-box">
-            <i data-lucide="bell"></i>
+            <i data-lucide="bell-off"></i>
             <p>No notifications yet</p>
+            <span>Your orders, payment verifications, and system alerts will appear here.</span>
           </div>
         <?php else: ?>
-          <?php foreach ($notifications as $n): ?>
-            <div class="order-card-row">
-              <div>
-                <div style="font-weight: 800; font-size: 15px;"><?= htmlspecialchars($n['title']) ?></div>
-                <div style="font-size: 12px; color: var(--text-muted);"><?= htmlspecialchars($n['content']) ?></div>
+          <?php foreach ($userNotifications as $n): ?>
+            <div class="order-card-row" style="<?= $n['is_read'] ? '' : 'border-left: 3px solid var(--primary-blue); background: #f8fbff;' ?>">
+              <div style="flex: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                  <div style="font-weight: 800; font-size: 15px; color: #0f172a;"><?= htmlspecialchars($n['title']) ?></div>
+                  <?php if (!$n['is_read']): ?>
+                    <a href="/user/notifications.php?action=read&id=<?= (int)$n['id'] ?>" class="btn-secondary" style="font-size: 10px; padding: 4px 8px; white-space: nowrap;">
+                      Mark Read
+                    </a>
+                  <?php endif; ?>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;"><?= htmlspecialchars($n['message']) ?></div>
+                <div style="font-size: 10px; color: var(--text-light); margin-top: 4px;"><?= htmlspecialchars(getFormattedDate($n['created_at'])) ?></div>
               </div>
             </div>
           <?php endforeach; ?>
@@ -606,6 +625,11 @@ $notifications = $notifStmt->fetchAll();
 
   </div>
 
+  <script>
+    window.APP_CURRENCY_SYMBOL = <?= json_encode(getCurrencySymbol()) ?>;
+    window.APP_CURRENCY_CODE = <?= json_encode(getCurrencyCode()) ?>;
+    window.APP_CURRENCY_NAME = <?= json_encode(getCurrencyName()) ?>;
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
