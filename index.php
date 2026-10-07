@@ -19,6 +19,129 @@ if (Auth::checkUser()) {
     header("Location: /user/dashboard.php");
     exit;
 }
+
+// Fetch categories and services dynamically from database
+$categories = [];
+$services = [];
+$currencySymbol = getCurrencySymbol();
+$currencyCode = getSetting('currency_code', 'INR');
+
+try {
+    $db = Database::getConnection();
+    $catStmt = $db->query("SELECT * FROM categories WHERE status = 'active' ORDER BY sort_order ASC");
+    if ($catStmt) $categories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $servStmt = $db->query("
+        SELECT s.*, c.name as category_name, c.slug as category_slug, c.icon as category_icon 
+        FROM services s 
+        JOIN categories c ON s.category_id = c.id 
+        WHERE s.status = 'active' 
+        ORDER BY c.sort_order ASC, s.id ASC
+    ");
+    if ($servStmt) $services = $servStmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    // Database connection fallback
+}
+
+// Fallback if database table is not yet seeded or empty
+if (empty($services)) {
+    $services = [
+        ['id' => 2, 'category_id' => 2, 'category_name' => 'YouTube', 'category_slug' => 'youtube', 'name' => 'YouTube Views', 'rate_per_1k' => 12.00, 'min_quantity' => 1000, 'max_quantity' => 1000000, 'badges' => 'Real Views • High Retention', 'speed_tag' => 'Fast Delivery'],
+        ['id' => 1, 'category_id' => 1, 'category_name' => 'Instagram', 'category_slug' => 'instagram', 'name' => 'Instagram Followers', 'rate_per_1k' => 35.00, 'min_quantity' => 1000, 'max_quantity' => 1010000, 'badges' => 'Real & Active Followers • High Quality • Fast Delivery', 'speed_tag' => 'Starts in 1-2 Hours'],
+        ['id' => 3, 'category_id' => 3, 'category_name' => 'Telegram', 'category_slug' => 'telegram', 'name' => 'Telegram Members', 'rate_per_1k' => 45.00, 'min_quantity' => 500, 'max_quantity' => 200000, 'badges' => 'Real & Active Members • Instant Start', 'speed_tag' => 'Fast Delivery'],
+        ['id' => 4, 'category_id' => 5, 'category_name' => 'TikTok', 'category_slug' => 'tiktok', 'name' => 'TikTok Likes & Views', 'rate_per_1k' => 25.00, 'min_quantity' => 500, 'max_quantity' => 500000, 'badges' => 'Instant For-You Reach • High Retention', 'speed_tag' => 'Instant Start'],
+        ['id' => 5, 'category_id' => 6, 'category_name' => 'Twitter (X)', 'category_slug' => 'twitter-x', 'name' => 'Twitter (X) Retweets', 'rate_per_1k' => 40.00, 'min_quantity' => 100, 'max_quantity' => 100000, 'badges' => 'Worldwide Engagement • Fast Viral Boost', 'speed_tag' => 'Fast Delivery'],
+        ['id' => 6, 'category_id' => 1, 'category_name' => 'Instagram', 'category_slug' => 'instagram', 'name' => 'Instagram Likes', 'rate_per_1k' => 20.00, 'min_quantity' => 100, 'max_quantity' => 500000, 'badges' => 'High Quality • Instant Start • Non-Drop', 'speed_tag' => 'Instant Start'],
+        ['id' => 7, 'category_id' => 2, 'category_name' => 'YouTube', 'category_slug' => 'youtube', 'name' => 'YouTube Subscribers', 'rate_per_1k' => 180.00, 'min_quantity' => 100, 'max_quantity' => 100000, 'badges' => 'Monetizable • High Retention • Refill', 'speed_tag' => 'Fast Delivery']
+    ];
+}
+
+// Order services so YouTube is left, Instagram is center (index 1), Telegram is right (index 2) matching reference image
+usort($services, function($a, $b) {
+    $orderMap = ['youtube' => 1, 'instagram' => 2, 'telegram' => 3, 'tiktok' => 4, 'twitter-x' => 5, 'facebook' => 6];
+    $slugA = strtolower($a['category_slug'] ?? '');
+    $slugB = strtolower($b['category_slug'] ?? '');
+    $valA = $orderMap[$slugA] ?? 99;
+    $valB = $orderMap[$slugB] ?? 99;
+    return $valA <=> $valB;
+});
+
+function getLandingCardTheme($service) {
+    $slug = strtolower($service['category_slug'] ?? $service['category_name'] ?? '');
+    $name = strtolower($service['name'] ?? '');
+
+    if (strpos($slug, 'youtube') !== false || strpos($name, 'youtube') !== false) {
+        return [
+            'tag' => 'YouTube',
+            'icon' => 'youtube',
+            'bg' => 'radial-gradient(circle at 50% 50%, #ff4b4b 0%, #dc2626 100%)',
+            'icon_bg' => 'rgba(255,255,255,0.22)',
+            'icon_color' => '#ffffff',
+            'has_heart' => false,
+            'badge_plus' => null
+        ];
+    } elseif (strpos($slug, 'instagram') !== false || strpos($name, 'instagram') !== false) {
+        return [
+            'tag' => 'Instagram',
+            'icon' => 'instagram',
+            'bg' => 'radial-gradient(circle at 30% 30%, #f58529 0%, #dd2a7b 50%, #8134af 100%)',
+            'icon_bg' => 'rgba(255,255,255,0.25)',
+            'icon_color' => '#ffffff',
+            'has_heart' => true,
+            'badge_plus' => '+1K'
+        ];
+    } elseif (strpos($slug, 'telegram') !== false || strpos($name, 'telegram') !== false) {
+        return [
+            'tag' => 'Telegram',
+            'icon' => 'send',
+            'bg' => 'radial-gradient(circle at 50% 50%, #38bdf8 0%, #0284c7 100%)',
+            'icon_bg' => 'rgba(255,255,255,0.22)',
+            'icon_color' => '#ffffff',
+            'has_heart' => false,
+            'badge_plus' => null
+        ];
+    } elseif (strpos($slug, 'tiktok') !== false || strpos($name, 'tiktok') !== false) {
+        return [
+            'tag' => 'TikTok',
+            'icon' => 'music',
+            'bg' => 'radial-gradient(circle at 50% 50%, #1e293b 0%, #000000 100%)',
+            'icon_bg' => 'rgba(255,255,255,0.15)',
+            'icon_color' => '#22d3ee',
+            'has_heart' => false,
+            'badge_plus' => null
+        ];
+    } elseif (strpos($slug, 'twitter') !== false || strpos($name, 'twitter') !== false) {
+        return [
+            'tag' => 'Twitter (X)',
+            'icon' => 'twitter',
+            'bg' => 'radial-gradient(circle at 50% 50%, #334155 0%, #0f172a 100%)',
+            'icon_bg' => 'rgba(255,255,255,0.18)',
+            'icon_color' => '#ffffff',
+            'has_heart' => false,
+            'badge_plus' => null
+        ];
+    } elseif (strpos($slug, 'facebook') !== false || strpos($name, 'facebook') !== false) {
+        return [
+            'tag' => 'Facebook',
+            'icon' => 'facebook',
+            'bg' => 'radial-gradient(circle at 50% 50%, #1877f2 0%, #0d5cb6 100%)',
+            'icon_bg' => 'rgba(255,255,255,0.22)',
+            'icon_color' => '#ffffff',
+            'has_heart' => false,
+            'badge_plus' => null
+        ];
+    } else {
+        return [
+            'tag' => htmlspecialchars($service['category_name'] ?? 'Premium'),
+            'icon' => 'zap',
+            'bg' => 'radial-gradient(circle at 50% 50%, #2563eb 0%, #1d4ed8 100%)',
+            'icon_bg' => 'rgba(255,255,255,0.20)',
+            'icon_color' => '#ffffff',
+            'has_heart' => false,
+            'badge_plus' => null
+        ];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -124,141 +247,140 @@ if (Auth::checkUser()) {
     </div>
   </section>
 
-  <!-- 3. 3D Card Carousel Section (Matches Reference Image) -->
+  <!-- 3. 3D Card Carousel Section (Dynamically Powered by Database) -->
   <section class="landing-carousel-section" id="services-section">
     <div class="swiper landing-3d-swiper">
       <div class="swiper-wrapper">
 
-        <!-- Card 1: YouTube Views (Left Card in reference image) -->
-        <div class="swiper-slide landing-card-slide landing-card-zoom-target" data-url="/register.php">
-          <div class="landing-card-banner" style="background: radial-gradient(circle at 50% 50%, #ff4b4b 0%, #dc2626 100%);">
-            <span class="landing-tag-frosted">YouTube</span>
-            <div style="width: 90px; height: 90px; border-radius: 26px; background: rgba(255,255,255,0.22); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px rgba(0,0,0,0.2); border: 2px solid rgba(255,255,255,0.35);">
-              <i data-lucide="youtube" style="width: 48px; height: 48px; color: #ffffff;"></i>
-            </div>
-          </div>
-          <div class="landing-card-body">
-            <div class="landing-card-title">YouTube Views</div>
-            <div class="landing-card-subtitle">Real Views • High Retention</div>
-            <div class="landing-price-bar">
-              <div class="landing-price-val"><?= htmlspecialchars(getCurrencySymbol()) ?>12 <span>/ 1K</span></div>
-              <span class="badge badge-success" style="padding: 6px 12px; font-size: 11px;">
-                <i data-lucide="zap" style="width: 12px; height: 12px; margin-right: 4px;"></i> Fast Delivery
-              </span>
-            </div>
-            <a href="/register.php" class="landing-order-btn" onclick="handleCardOrderClick(event, this)">
-              <i data-lucide="shopping-cart"></i> Order Now &rarr;
-            </a>
-          </div>
-        </div>
-
-        <!-- Card 2: Instagram Followers (Active Center Card in reference image) -->
-        <div class="swiper-slide landing-card-slide landing-card-zoom-target" data-url="/register.php">
-          <div class="landing-card-banner" style="background: radial-gradient(circle at 30% 30%, #f58529 0%, #dd2a7b 50%, #8134af 100%);">
-            <span class="landing-tag-frosted">Instagram</span>
-            <!-- 3D Heart Speech Bubbles & +1K Badge -->
+        <?php foreach ($services as $srv): 
+          $theme = getLandingCardTheme($srv);
+          $srvRate = number_format((float)$srv['rate_per_1k'], 0);
+          $srvName = htmlspecialchars($srv['name']);
+          $srvBadges = htmlspecialchars($srv['badges'] ?: 'High Quality • Instant Start • Fast Delivery');
+          $srvSpeed = htmlspecialchars($srv['speed_tag'] ?: 'Fast Delivery');
+        ?>
+        <div class="swiper-slide landing-card-slide landing-card-zoom-target" data-url="/register.php?service_id=<?= (int)$srv['id'] ?>">
+          <div class="landing-card-banner" style="background: <?= $theme['bg'] ?>;">
+            <span class="landing-tag-frosted"><?= $theme['tag'] ?></span>
+            
             <div style="position: relative; display: flex; align-items: center; justify-content: center;">
-              <div style="width: 100px; height: 100px; border-radius: 30px; background: rgba(255,255,255,0.25); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; box-shadow: 0 16px 32px rgba(0,0,0,0.25); border: 2px solid rgba(255,255,255,0.45);">
-                <i data-lucide="instagram" style="width: 54px; height: 54px; color: #ffffff;"></i>
+              <div style="width: <?= $theme['has_heart'] ? '100px' : '90px' ?>; height: <?= $theme['has_heart'] ? '100px' : '90px' ?>; border-radius: <?= $theme['has_heart'] ? '30px' : '26px' ?>; background: <?= $theme['icon_bg'] ?>; backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px rgba(0,0,0,0.22); border: 2px solid rgba(255,255,255,0.38);">
+                <i data-lucide="<?= $theme['icon'] ?>" style="width: <?= $theme['has_heart'] ? '54px' : '48px' ?>; height: <?= $theme['has_heart'] ? '54px' : '48px' ?>; color: <?= $theme['icon_color'] ?>;"></i>
               </div>
+              <?php if ($theme['has_heart']): ?>
               <div style="position: absolute; top: -10px; right: -22px; background: #ffffff; color: #e11d48; padding: 6px 10px; border-radius: 9999px; box-shadow: 0 6px 16px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 4px; font-weight: 900; font-size: 11px;">
                 <i data-lucide="heart" style="width: 12px; height: 12px; fill: #e11d48;"></i>
               </div>
+              <?php endif; ?>
+              <?php if (!empty($theme['badge_plus'])): ?>
               <div style="position: absolute; bottom: -12px; right: -15px; background: #6366f1; color: #ffffff; padding: 5px 12px; border-radius: 9999px; font-weight: 900; font-size: 12px; box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);">
-                +1K
+                <?= $theme['badge_plus'] ?>
               </div>
+              <?php endif; ?>
             </div>
           </div>
           <div class="landing-card-body">
-            <div class="landing-card-title">Instagram Followers</div>
-            <div class="landing-card-subtitle">Real &amp; Active Followers • High Quality • Fast Delivery</div>
+            <div class="landing-card-title"><?= $srvName ?></div>
+            <div class="landing-card-subtitle"><?= $srvBadges ?></div>
             <div class="landing-price-bar">
-              <div class="landing-price-val"><?= htmlspecialchars(getCurrencySymbol()) ?>35 <span>/ 1K</span></div>
+              <div class="landing-price-val"><?= htmlspecialchars($currencySymbol) ?><?= $srvRate ?> <span>/ 1K</span></div>
               <span class="badge badge-success" style="padding: 6px 12px; font-size: 11px;">
-                <i data-lucide="zap" style="width: 12px; height: 12px; margin-right: 4px;"></i> Starts in 1-2 Hours
+                <i data-lucide="zap" style="width: 12px; height: 12px; margin-right: 4px;"></i> <?= $srvSpeed ?>
               </span>
             </div>
-            <a href="/register.php" class="landing-order-btn" onclick="handleCardOrderClick(event, this)">
+            <a href="/register.php?service_id=<?= (int)$srv['id'] ?>" class="landing-order-btn" onclick="handleCardOrderClick(event, this)">
               <i data-lucide="shopping-cart"></i> Order Now &rarr;
             </a>
           </div>
         </div>
-
-        <!-- Card 3: Telegram Members (Right Card in reference image) -->
-        <div class="swiper-slide landing-card-slide landing-card-zoom-target" data-url="/register.php">
-          <div class="landing-card-banner" style="background: radial-gradient(circle at 50% 50%, #38bdf8 0%, #0284c7 100%);">
-            <span class="landing-tag-frosted">Telegram</span>
-            <div style="width: 90px; height: 90px; border-radius: 26px; background: rgba(255,255,255,0.22); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px rgba(0,0,0,0.2); border: 2px solid rgba(255,255,255,0.35);">
-              <i data-lucide="send" style="width: 44px; height: 44px; color: #ffffff;"></i>
-            </div>
-          </div>
-          <div class="landing-card-body">
-            <div class="landing-card-title">Telegram Members</div>
-            <div class="landing-card-subtitle">Real &amp; Active Members • Instant Start</div>
-            <div class="landing-price-bar">
-              <div class="landing-price-val"><?= htmlspecialchars(getCurrencySymbol()) ?>45 <span>/ 1K</span></div>
-              <span class="badge badge-success" style="padding: 6px 12px; font-size: 11px;">
-                <i data-lucide="zap" style="width: 12px; height: 12px; margin-right: 4px;"></i> Fast Delivery
-              </span>
-            </div>
-            <a href="/register.php" class="landing-order-btn" onclick="handleCardOrderClick(event, this)">
-              <i data-lucide="shopping-cart"></i> Order Now &rarr;
-            </a>
-          </div>
-        </div>
-
-        <!-- Card 4: TikTok Likes -->
-        <div class="swiper-slide landing-card-slide landing-card-zoom-target" data-url="/register.php">
-          <div class="landing-card-banner" style="background: radial-gradient(circle at 50% 50%, #1e293b 0%, #000000 100%);">
-            <span class="landing-tag-frosted">TikTok</span>
-            <div style="width: 90px; height: 90px; border-radius: 26px; background: rgba(255,255,255,0.15); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.25);">
-              <i data-lucide="music" style="width: 44px; height: 44px; color: #22d3ee;"></i>
-            </div>
-          </div>
-          <div class="landing-card-body">
-            <div class="landing-card-title">TikTok Likes &amp; Views</div>
-            <div class="landing-card-subtitle">Instant For-You Reach • High Retention</div>
-            <div class="landing-price-bar">
-              <div class="landing-price-val"><?= htmlspecialchars(getCurrencySymbol()) ?>25 <span>/ 1K</span></div>
-              <span class="badge badge-success" style="padding: 6px 12px; font-size: 11px;">
-                <i data-lucide="zap" style="width: 12px; height: 12px; margin-right: 4px;"></i> Instant Start
-              </span>
-            </div>
-            <a href="/register.php" class="landing-order-btn" onclick="handleCardOrderClick(event, this)">
-              <i data-lucide="shopping-cart"></i> Order Now &rarr;
-            </a>
-          </div>
-        </div>
-
-        <!-- Card 5: Twitter (X) Retweets -->
-        <div class="swiper-slide landing-card-slide landing-card-zoom-target" data-url="/register.php">
-          <div class="landing-card-banner" style="background: radial-gradient(circle at 50% 50%, #334155 0%, #0f172a 100%);">
-            <span class="landing-tag-frosted">Twitter (X)</span>
-            <div style="width: 90px; height: 90px; border-radius: 26px; background: rgba(255,255,255,0.18); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px rgba(0,0,0,0.25); border: 2px solid rgba(255,255,255,0.3);">
-              <i data-lucide="twitter" style="width: 44px; height: 44px; color: #ffffff;"></i>
-            </div>
-          </div>
-          <div class="landing-card-body">
-            <div class="landing-card-title">Twitter (X) Retweets</div>
-            <div class="landing-card-subtitle">Worldwide Engagement • Fast Viral Boost</div>
-            <div class="landing-price-bar">
-              <div class="landing-price-val"><?= htmlspecialchars(getCurrencySymbol()) ?>40 <span>/ 1K</span></div>
-              <span class="badge badge-success" style="padding: 6px 12px; font-size: 11px;">
-                <i data-lucide="zap" style="width: 12px; height: 12px; margin-right: 4px;"></i> Fast Delivery
-              </span>
-            </div>
-            <a href="/register.php" class="landing-order-btn" onclick="handleCardOrderClick(event, this)">
-              <i data-lucide="shopping-cart"></i> Order Now &rarr;
-            </a>
-          </div>
-        </div>
+        <?php endforeach; ?>
 
       </div>
 
-      <!-- Pagination Dots (5 dots as in image) -->
+      <!-- Pagination Dots -->
       <div class="swiper-pagination landing-swiper-pagination" style="margin-top: 24px;"></div>
     </div>
   </section>
+
+  <!-- Live Database Service Catalog Table / Directory -->
+  <section style="max-width: 1100px; margin: 40px auto; padding: 0 20px;">
+    <div style="background: #ffffff; border-radius: 24px; border: 1px solid #e2e8f0; padding: 28px 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 11px; font-weight: 800; background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase;">Database Powered</span>
+            <span style="font-size: 12px; color: #16a34a; font-weight: 700;">🟢 Live Service Pricing</span>
+          </div>
+          <h3 style="font-size: 22px; font-weight: 900; color: #0f172a; margin: 6px 0 0 0;">All Verified SMM Services</h3>
+        </div>
+        <div>
+          <input type="text" id="live-catalog-search" placeholder="Search services..." oninput="filterCatalogTable()" style="padding: 10px 16px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 13px; width: 220px; outline: none; font-weight: 600;" />
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+          <thead>
+            <tr style="border-bottom: 2px solid #f1f5f9; color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <th style="padding: 12px 14px;">Platform</th>
+              <th style="padding: 12px 14px;">Service Name</th>
+              <th style="padding: 12px 14px;">Rate / 1K</th>
+              <th style="padding: 12px 14px;">Min / Max</th>
+              <th style="padding: 12px 14px;">Delivery Speed</th>
+              <th style="padding: 12px 14px; text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="live-catalog-tbody">
+            <?php foreach ($services as $srv): 
+              $theme = getLandingCardTheme($srv);
+            ?>
+            <tr class="catalog-row" data-name="<?= strtolower(htmlspecialchars($srv['name'])) ?>" data-platform="<?= strtolower(htmlspecialchars($srv['category_name'] ?? '')) ?>" style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 14px;">
+                <span style="font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+                  <i data-lucide="<?= $theme['icon'] ?>" style="width: 16px; height: 16px; color: #2563eb;"></i>
+                  <?= htmlspecialchars($srv['category_name'] ?? $theme['tag']) ?>
+                </span>
+              </td>
+              <td style="padding: 14px;">
+                <strong style="color: #0f172a; display: block;"><?= htmlspecialchars($srv['name']) ?></strong>
+                <span style="font-size: 11px; color: #64748b;"><?= htmlspecialchars($srv['badges'] ?: 'Non-Drop • High Retention') ?></span>
+              </td>
+              <td style="padding: 14px;">
+                <span style="font-weight: 800; color: #2563eb; font-size: 14px;">
+                  <?= htmlspecialchars($currencySymbol) ?><?= number_format((float)$srv['rate_per_1k'], 2) ?>
+                </span>
+              </td>
+              <td style="padding: 14px; color: #64748b; font-size: 12px;">
+                <?= number_format((int)$srv['min_quantity']) ?> / <?= number_format((int)$srv['max_quantity']) ?>
+              </td>
+              <td style="padding: 14px;">
+                <span class="badge badge-success" style="font-size: 11px;">
+                  <i data-lucide="zap" style="width: 11px; height: 11px; margin-right: 3px;"></i>
+                  <?= htmlspecialchars($srv['speed_tag'] ?: 'Fast Delivery') ?>
+                </span>
+              </td>
+              <td style="padding: 14px; text-align: right;">
+                <a href="/register.php?service_id=<?= (int)$srv['id'] ?>" style="background: #2563eb; color: #ffffff; text-decoration: none; padding: 6px 14px; border-radius: 9999px; font-weight: 800; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;">
+                  Order &rarr;
+                </a>
+              </td>
+            </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    function filterCatalogTable() {
+      const q = document.getElementById('live-catalog-search').value.toLowerCase().trim();
+      document.querySelectorAll('.catalog-row').forEach(row => {
+        const text = (row.dataset.name + ' ' + row.dataset.platform).toLowerCase();
+        row.style.display = text.includes(q) ? '' : 'none';
+      });
+    }
+  </script>
 
   <!-- 4. Supported Platforms Section (Matches Reference Image) -->
   <section class="landing-platforms-section" id="how-it-works">

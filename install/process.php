@@ -124,13 +124,23 @@ if ($action === 'migrate_db') {
             (1, 'Instagram', 'instagram', 'instagram', 1, 'active'),
             (2, 'YouTube', 'youtube', 'youtube', 2, 'active'),
             (3, 'Telegram', 'telegram', 'send', 3, 'active'),
-            (4, 'Facebook', 'facebook', 'facebook', 4, 'active'),
-            (5, 'TikTok', 'tiktok', 'video', 5, 'active'),
-            (6, 'Twitter (X)', 'twitter-x', 'twitter', 6, 'active');
+            (4, 'TikTok', 'tiktok', 'music', 4, 'active'),
+            (5, 'Twitter (X)', 'twitter-x', 'twitter', 5, 'active'),
+            (6, 'Facebook', 'facebook', 'facebook', 6, 'active');
+
+            INSERT IGNORE INTO `services` (`id`, `category_id`, `name`, `rate_per_1k`, `min_quantity`, `max_quantity`, `description`, `badges`, `speed_tag`, `status`) VALUES
+            (1, 1, 'Instagram Followers', 35.00, 1000, 1010000, 'Real & Active Followers, high retention, non-drop refill.', 'Real & Active Followers | High Quality | Fast Delivery', 'Starts in 1-2 Hours', 'active'),
+            (2, 2, 'YouTube Views', 12.00, 1000, 1000000, 'High retention YouTube video views, safe for monetization.', 'Real Views | High Retention | 100% Safe', 'Fast Delivery', 'active'),
+            (3, 3, 'Telegram Members', 45.00, 500, 200000, 'Real Telegram channel and group members with instant start.', 'Real & Active Members | Instant Start | No Drop', 'Fast Delivery', 'active'),
+            (4, 4, 'TikTok Likes & Views', 25.00, 500, 500000, 'Viral reach for your TikTok videos and clips, fast delivery.', 'Instant For-You Reach | Viral Boost | High Quality', 'Instant Start', 'active'),
+            (5, 5, 'Twitter (X) Retweets', 40.00, 100, 100000, 'Global Twitter retweets and engagement from genuine profiles.', 'Worldwide Engagement | Real Retweets | Organic', 'Fast Delivery', 'active'),
+            (6, 1, 'Instagram Likes', 20.00, 100, 500000, 'Instant high quality likes for Instagram posts and reels.', 'High Quality Likes | Instant Start | Non-Drop', 'Instant Start', 'active'),
+            (7, 2, 'YouTube Subscribers', 180.00, 100, 100000, 'Genuine YouTube channel subscribers with lifetime warranty.', 'Real Profiles | Monetization Friendly | Non-Drop', 'Natural Speed', 'active'),
+            (8, 6, 'Facebook Page Followers', 65.00, 500, 250000, 'Targeted real Facebook page likes and followers.', 'Global Audience | 100% Real | Safe Growth', 'Starts in 2 Hours', 'active');
         ";
         $pdo->exec($seedCategories);
 
-        respond(true, 'All 14 database tables and initial categories created successfully!');
+        respond(true, 'All 14 database tables, categories and services created successfully!');
     } catch (PDOException $e) {
         respond(false, 'Table migration error: ' . $e->getMessage(), [], 500);
     }
