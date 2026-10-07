@@ -1,0 +1,6 @@
+{
+  "name": "SMM Panel - Grow Your Social Media",
+  "description": "Premium 3D SMM Panel web application with card carousel navigation, GSAP animations, Swiper.js, provider API sync, order system, and admin management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
