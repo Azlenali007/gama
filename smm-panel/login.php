@@ -1,13 +1,58 @@
 <?php
 /**
- * SMM Panel - Login Page (Matches Reference Image 1 Exactly)
+ * SMM Panel - User Login Page (Matches Reference Image 1 Exactly)
+ * Strict Authentication: password_verify(), CSRF Protection, Rate Limiting
  */
 require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/includes/auth.php';
 
-// If already logged in, redirect to user dashboard
-if (Auth::check() && !isset($_GET['logout'])) {
+// If already logged in as normal user, redirect to user dashboard
+if (Auth::checkUser()) {
     header("Location: /user/dashboard.php");
     exit;
+}
+
+$errorMessage = '';
+$isRateLimited = false;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['user_login'])) {
+    $csrfToken = $_POST['csrf_token'] ?? '';
+    if (!CSRF::validateToken($csrfToken)) {
+        $errorMessage = 'Session expired. Please try again.';
+    } else {
+        $email = trim($_POST['email'] ?? '');
+        $password = trim($_POST['password'] ?? '');
+
+        if (empty($email) || empty($password)) {
+            $errorMessage = 'Please provide both email and password.';
+        } elseif (Auth::isRateLimited('user_' . $email)) {
+            $errorMessage = 'Too many failed login attempts. Please wait 15 minutes before trying again.';
+            $isRateLimited = true;
+        } else {
+            try {
+                $db = Database::getConnection();
+                $stmt = $db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
+                $stmt->execute([':email' => $email]);
+                $user = $stmt->fetch();
+
+                if ($user && password_verify($password, $user['password_hash'])) {
+                    if ($user['status'] !== 'active') {
+                        $errorMessage = 'Your account has been suspended or is pending review.';
+                    } else {
+                        Auth::loginUser($user);
+                        $redirect = $_GET['redirect'] ?? '/user/dashboard.php';
+                        header("Location: " . filter_var($redirect, FILTER_SANITIZE_URL));
+                        exit;
+                    }
+                } else {
+                    Auth::recordFailedAttempt('user_' . $email);
+                    $errorMessage = 'Invalid email address or password.';
+                }
+            } catch (Exception $e) {
+                $errorMessage = 'Database connection error: ' . htmlspecialchars($e->getMessage());
+            }
+        }
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -56,8 +101,9 @@ if (Auth::check() && !isset($_GET['logout'])) {
           </div>
         </div>
 
-        <div style="font-size: 12px; color: rgba(255,255,255,0.7);">
-          &copy; <?= date('Y') ?> <?= htmlspecialchars(APP_NAME) ?>. All rights reserved.
+        <div style="font-size: 12px; color: rgba(255,255,255,0.7); display: flex; justify-content: space-between; align-items: center;">
+          <span>&copy; <?= date('Y') ?> <?= htmlspecialchars(APP_NAME) ?>.</span>
+          <a href="/admin/index.php" style="color: rgba(255,255,255,0.85); font-weight: 700; text-decoration: underline;">Admin Portal</a>
         </div>
       </div>
 
@@ -74,12 +120,21 @@ if (Auth::check() && !isset($_GET['logout'])) {
           <p style="font-size: 13px; color: var(--text-muted);">Sign in to your account to continue.</p>
         </div>
 
-        <form id="login-form" onsubmit="handleLoginSubmit(event)">
+        <?php if (!empty($errorMessage)): ?>
+          <div style="background: #fee2e2; border: 1px solid #f87171; color: #b91c1c; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="alert-circle" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+            <span><?= htmlspecialchars($errorMessage) ?></span>
+          </div>
+        <?php endif; ?>
+
+        <form method="POST" action="/login.php<?= isset($_GET['redirect']) ? '?redirect=' . urlencode($_GET['redirect']) : '' ?>">
+          <?= CSRF::inputField() ?>
+
           <!-- Email Input -->
           <div class="form-field-group">
             <div class="form-input-with-icon">
               <i data-lucide="mail" class="input-icon-left"></i>
-              <input type="email" id="login-email" placeholder="Email Address" value="aarisali@gmail.com" required>
+              <input type="email" name="email" id="login-email" placeholder="Email Address" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
             </div>
           </div>
 
@@ -87,7 +142,7 @@ if (Auth::check() && !isset($_GET['logout'])) {
           <div class="form-field-group">
             <div class="form-input-with-icon">
               <i data-lucide="lock" class="input-icon-left"></i>
-              <input type="password" id="login-password" placeholder="Password" value="password123" required>
+              <input type="password" name="password" id="login-password" placeholder="Password" required>
               <i data-lucide="eye" class="input-icon-right" onclick="togglePasswordVisibility()"></i>
             </div>
           </div>
@@ -95,27 +150,27 @@ if (Auth::check() && !isset($_GET['logout'])) {
           <!-- Remember Me & Forgot Password -->
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; font-size: 13px;">
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #334155;">
-              <input type="checkbox" id="remember-me" checked style="width: 16px; height: 16px;">
+              <input type="checkbox" name="remember_me" id="remember-me" checked style="width: 16px; height: 16px;">
               <span>Remember Me</span>
             </label>
             <a href="/forgot-password.php" style="color: var(--primary-blue); font-weight: 600;">Forgot Password?</a>
           </div>
 
           <!-- Submit CTA Button (Image 1: Login ->) -->
-          <button type="submit" id="btn-login" class="btn-primary" style="margin-bottom: 20px;">
+          <button type="submit" name="user_login" id="btn-login" class="btn-primary" style="margin-bottom: 20px;">
             Login &rarr;
           </button>
 
-          <!-- Social Login (Image 1: Google, Telegram) -->
+          <!-- Social Login Buttons -->
           <div style="text-align: center; margin-bottom: 18px; font-size: 12px; color: var(--text-light); font-weight: 600;">
             Or continue with
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
-            <button type="button" class="btn-secondary" onclick="demoOAuth('Google')" style="padding: 10px;">
+            <button type="button" class="btn-secondary" onclick="alert('Social OAuth requires OAuth credentials configured in settings.')" style="padding: 10px;">
               <i data-lucide="globe" style="width: 16px; height: 16px; color: #ea4335;"></i> Google
             </button>
-            <button type="button" class="btn-secondary" onclick="demoOAuth('Telegram')" style="padding: 10px;">
+            <button type="button" class="btn-secondary" onclick="alert('Telegram authentication requires bot widget configuration.')" style="padding: 10px;">
               <i data-lucide="send" style="width: 16px; height: 16px; color: #0284c7;"></i> Telegram
             </button>
           </div>
@@ -130,7 +185,6 @@ if (Auth::check() && !isset($_GET['logout'])) {
   </div>
 
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="/assets/js/user.js"></script>
   <script>
     lucide.createIcons();
 
@@ -141,41 +195,6 @@ if (Auth::check() && !isset($_GET['logout'])) {
       } else {
         input.type = 'password';
       }
-    }
-
-    async function handleLoginSubmit(e) {
-      e.preventDefault();
-      const email = document.getElementById('login-email').value;
-      const pwd = document.getElementById('login-password').value;
-      const btn = document.getElementById('btn-login');
-
-      btn.disabled = true;
-      btn.innerHTML = 'Signing in...';
-
-      try {
-        const res = await fetch('/api/auth/login.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password: pwd })
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast('Welcome back, Aaris Ali!', 'success');
-          setTimeout(() => location.href = '/user/dashboard.php', 600);
-        } else {
-          showToast(data.message || 'Login failed', 'error');
-          btn.disabled = false;
-          btn.innerHTML = 'Login &rarr;';
-        }
-      } catch (err) {
-        showToast('Login successful (Demo Mode)', 'success');
-        setTimeout(() => location.href = '/user/dashboard.php', 600);
-      }
-    }
-
-    function demoOAuth(provider) {
-      showToast(`Signing in via ${provider}...`, 'info');
-      setTimeout(() => location.href = '/user/dashboard.php', 800);
     }
   </script>
 </body>

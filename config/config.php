@@ -1,9 +1,16 @@
 <?php
 /**
- * SMM Panel - Global System Config
+ * SMM Panel - Global System Configuration & Security Enforcement
  */
 
+define('INSTALL_LOCK_FILE', __DIR__ . '/../install/installed.lock');
+define('IS_INSTALLED', file_exists(INSTALL_LOCK_FILE));
+
+// Secure Session Configuration
 if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.cookie_samesite', 'Lax');
     session_start();
 }
 
@@ -20,18 +27,11 @@ header("X-XSS-Protection: 1; mode=block");
 // Set default timezone
 date_default_timezone_set('Asia/Kolkata');
 
-// Auto initialize demo session if unauthenticated for preview convenience
-if (!isset($_SESSION['user_id']) && !isset($_SESSION['admin_id'])) {
-    // Default demo session aligned with reference images: Aaris Ali #1024
-    $_SESSION['demo_user'] = [
-        'id' => 1,
-        'user_id_code' => '#1024',
-        'name' => 'Aaris Ali',
-        'email' => 'aarisali@gmail.com',
-        'phone' => '+91 98765 43210',
-        'balance' => 850.50,
-        'currency' => 'INR',
-        'email_verified' => true,
-        'role' => 'user'
-    ];
+// Verify installation lock
+$currentScript = $_SERVER['PHP_SELF'] ?? '';
+$isInstallRoute = str_contains($currentScript, '/install/');
+
+if (!IS_INSTALLED && !$isInstallRoute) {
+    header("Location: /install/index.php");
+    exit;
 }
