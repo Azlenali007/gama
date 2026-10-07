@@ -288,6 +288,7 @@ $isLocked = file_exists(INSTALL_LOCK_FILE);
               <li>SMM API Providers &amp; Provider Services mapping catalog</li>
               <li>Orders, Payments (Razorpay), and Transactions ledger</li>
               <li>Support Tickets &amp; Messages desk</li>
+              <li>User Notifications with unread badge counters</li>
               <li>Categories, Announcements &amp; System Configuration</li>
             </ul>
           </div>

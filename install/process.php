@@ -130,7 +130,7 @@ if ($action === 'migrate_db') {
         ";
         $pdo->exec($seedCategories);
 
-        respond(true, 'All 13 database tables and initial categories created successfully!');
+        respond(true, 'All 14 database tables and initial categories created successfully!');
     } catch (PDOException $e) {
         respond(false, 'Table migration error: ' . $e->getMessage(), [], 500);
     }

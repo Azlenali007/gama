@@ -40,52 +40,8 @@ try {
         'orders' => $orders
     ]);
 } catch (Exception $e) {
-    // Fallback data matching Reference Image 5
-    $sampleOrders = [
-        [
-            'id' => 1,
-            'order_code' => '#10254',
-            'service_name' => 'Instagram Followers',
-            'quantity' => 1000,
-            'charge' => 35.00,
-            'status' => 'processing',
-            'created_at' => '2025-05-12 16:32:00'
-        ],
-        [
-            'id' => 2,
-            'order_code' => '#10253',
-            'service_name' => 'YouTube Views',
-            'quantity' => 5000,
-            'charge' => 120.00,
-            'status' => 'completed',
-            'created_at' => '2025-05-11 18:10:00'
-        ],
-        [
-            'id' => 3,
-            'order_code' => '#10252',
-            'service_name' => 'Telegram Members',
-            'quantity' => 2000,
-            'charge' => 90.00,
-            'status' => 'processing',
-            'created_at' => '2025-05-10 13:45:00'
-        ],
-        [
-            'id' => 4,
-            'order_code' => '#10251',
-            'service_name' => 'Instagram Likes',
-            'quantity' => 1000,
-            'charge' => 20.00,
-            'status' => 'completed',
-            'created_at' => '2025-05-09 19:20:00'
-        ]
-    ];
-
-    if ($statusFilter !== 'all') {
-        $sampleOrders = array_filter($sampleOrders, fn($o) => $o['status'] === $statusFilter);
-    }
-
     jsonResponse([
         'success' => true,
-        'orders' => array_values($sampleOrders)
+        'orders' => []
     ]);
 }

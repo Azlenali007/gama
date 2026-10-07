@@ -42,7 +42,7 @@ function initProviderModal() {
           showToast(data.message || 'Error connecting to provider API', 'error');
         }
       } catch (err) {
-        showToast('Provider added in demo mode', 'success');
+        showToast('Connection error: could not contact server', 'error');
         modal.classList.remove('active');
       }
     });
@@ -69,7 +69,7 @@ async function syncProviderBalance(providerId, btnElem) {
       showToast(data.message || 'Sync failed', 'error');
     }
   } catch (err) {
-    showToast('Balance synced: $428.60 USD (Mock)', 'success');
+    showToast('Balance sync error: could not connect to provider API', 'error');
   } finally {
     if (btnElem) {
       btnElem.innerHTML = '<i data-lucide="refresh-cw"></i> Sync';
