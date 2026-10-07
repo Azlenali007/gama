@@ -1,0 +1,54 @@
+# ============================================================
+# SMM PANEL - APACHE WEB SERVER SECURITY CONFIGURATION
+# Production Hardened .htaccess
+# ============================================================
+
+# 1. Disable Directory Browsing / Index Listing
+Options -Indexes
+
+# 2. Set Default Index Pages
+DirectoryIndex index.php index.html
+
+# 3. Security Headers (where mod_headers is available)
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# 4. Block Direct Access to Sensitive File Extensions
+# Prevents exposure of SQL dumps, environment files, logs, backups, and lock files
+<FilesMatch "(^#.*#|\.(bak|backup|old|sql|log|ini|env|lock|conf|config|sh|git.*)|~)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# 5. Protect Specific Critical Configuration Files from Direct Browser Request
+<FilesMatch "^(database\.php|config\.php|constants\.php|db-config\.php|csrf\.php|auth\.php|user-auth\.php|admin-auth\.php|functions\.php)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# 6. Prevent PHP Execution inside the Uploads Folder
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^uploads/.*\.php$ - [F,L,NC]
+</IfModule>
+
+# 7. Protect Internal Engine Directories from Direct Browsing
+# (Internal PHP code includes will continue working normally)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(config|includes|database)/.*$ - [F,L,NC]
+</IfModule>

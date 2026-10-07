@@ -1,8 +1,17 @@
 <?php
 /**
  * SMM Panel - Admin Module: Transactions Master Ledger
+ * Protected Server-Side
  */
 require_once __DIR__ . '/../includes/admin-auth.php';
+$db = Database::getConnection();
+
+$transactions = $db->query("
+    SELECT t.*, u.name as user_name, u.user_id_code 
+    FROM transactions t 
+    LEFT JOIN users u ON t.user_id = u.id 
+    ORDER BY t.id DESC
+")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -37,24 +46,27 @@ require_once __DIR__ . '/../includes/admin-auth.php';
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>#1</td>
-            <td>Aaris Ali (#1024)</td>
-            <td><span class="badge badge-success">Credit</span></td>
-            <td><strong style="color: #10b981;">+ ₹500.00</strong></td>
-            <td>Add Funds - Razorpay</td>
-            <td>₹850.50</td>
-            <td>12 May 2025, 4:12 PM</td>
-          </tr>
-          <tr>
-            <td>#2</td>
-            <td>Aaris Ali (#1024)</td>
-            <td><span class="badge badge-danger">Debit</span></td>
-            <td><strong style="color: #ef4444;">- ₹35.00</strong></td>
-            <td>Instagram Followers (#10254)</td>
-            <td>₹350.50</td>
-            <td>12 May 2025, 4:32 PM</td>
-          </tr>
+          <?php if (empty($transactions)): ?>
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                <i data-lucide="receipt" style="width: 40px; height: 40px; margin-bottom: 8px; color: var(--text-light);"></i>
+                <p style="font-weight: 700;">No transactions recorded yet</p>
+                <span style="font-size: 13px;">Platform credit/debit movements will show here.</span>
+              </td>
+            </tr>
+          <?php else: ?>
+            <?php foreach ($transactions as $t): ?>
+              <tr>
+                <td>#<?= (int)$t['id'] ?></td>
+                <td><?= htmlspecialchars($t['user_name'] ?: 'User') ?> (<?= htmlspecialchars($t['user_id_code'] ?: '#') ?>)</td>
+                <td><span class="badge <?= $t['direction'] === 'credit' ? 'badge-success' : 'badge-danger' ?>"><?= htmlspecialchars($t['type']) ?></span></td>
+                <td><strong class="<?= $t['direction'] === 'credit' ? 'txn-amount-credit' : 'txn-amount-debit' ?>"><?= $t['direction'] === 'credit' ? '+' : '-' ?> <?= formatCurrency((float)$t['amount']) ?></strong></td>
+                <td><?= htmlspecialchars($t['title']) ?> (<?= htmlspecialchars($t['description'] ?: '') ?>)</td>
+                <td><?= formatCurrency((float)$t['balance_after']) ?></td>
+                <td><?= getFormattedDate($t['created_at']) ?></td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
         </tbody>
       </table>
     </div>

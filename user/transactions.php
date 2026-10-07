@@ -1,8 +1,24 @@
 <?php
 /**
  * SMM Panel - User Module: Transactions History
+ * Protected Server-Side
  */
 require_once __DIR__ . '/../includes/user-auth.php';
+$user = Auth::user();
+$db = Database::getConnection();
+
+$typeFilter = trim($_GET['type'] ?? 'all');
+$sql = "SELECT * FROM transactions WHERE user_id = :uid";
+$params = [':uid' => $user['id']];
+if ($typeFilter !== 'all' && !empty($typeFilter)) {
+    $sql .= " AND type = :type";
+    $params[':type'] = $typeFilter;
+}
+$sql .= " ORDER BY id DESC";
+
+$stmt = $db->prepare($sql);
+$stmt->execute($params);
+$transactions = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -23,72 +39,37 @@ require_once __DIR__ . '/../includes/user-auth.php';
       </a>
     </div>
 
-    <!-- Filter Tabs (Image 7) -->
     <div class="filter-tabs-row">
-      <button class="filter-pill-btn active txn-filter-pill" data-filter="all">All</button>
-      <button class="filter-pill-btn txn-filter-pill" data-filter="add_funds">Add Funds</button>
-      <button class="filter-pill-btn txn-filter-pill" data-filter="order_payment">Orders</button>
-      <button class="filter-pill-btn txn-filter-pill" data-filter="refund">Refunds</button>
+      <a href="?type=all" class="filter-pill-btn <?= $typeFilter === 'all' ? 'active' : '' ?>">All</a>
+      <a href="?type=add_funds" class="filter-pill-btn <?= $typeFilter === 'add_funds' ? 'active' : '' ?>">Add Funds</a>
+      <a href="?type=order_payment" class="filter-pill-btn <?= $typeFilter === 'order_payment' ? 'active' : '' ?>">Orders</a>
+      <a href="?type=refund" class="filter-pill-btn <?= $typeFilter === 'refund' ? 'active' : '' ?>">Refunds</a>
     </div>
 
-    <!-- Transactions List (Matches Image 7) -->
     <div class="transactions-list-wrap">
-      <div class="txn-card-item" data-type="add_funds">
-        <div style="display: flex; align-items: center; gap: 14px;">
-          <div class="brand-icon-box" style="width: 40px; height: 40px; background: #e0f2fe; color: #0284c7;">
-            <i data-lucide="zap"></i>
-          </div>
-          <div>
-            <div style="font-weight: 800; font-size: 15px;">Add Funds</div>
-            <div style="font-size: 12px; color: var(--text-muted);">Razorpay &bull; 12 May 2025, 4:12 PM</div>
-          </div>
+      <?php if (empty($transactions)): ?>
+        <div style="text-align: center; padding: 40px 20px; background: #fff; border-radius: 20px; border: 1px dashed var(--border-light); color: var(--text-muted);">
+          <i data-lucide="receipt" style="width: 44px; height: 44px; margin-bottom: 12px; color: var(--text-light);"></i>
+          <p style="font-weight: 700; font-size: 15px;">No transactions yet</p>
+          <span style="font-size: 13px;">Wallet balance adjustments and purchases will appear here.</span>
         </div>
-        <div class="txn-amount-credit">+ ₹500</div>
-      </div>
-
-      <div class="txn-card-item" data-type="order_payment">
-        <div style="display: flex; align-items: center; gap: 14px;">
-          <div class="brand-icon-box" style="width: 40px; height: 40px; background: #fdf2f8; color: #db2777;">
-            <i data-lucide="instagram"></i>
+      <?php else: ?>
+        <?php foreach ($transactions as $txn): ?>
+          <div class="txn-card-item">
+            <div>
+              <div style="font-weight: 800; font-size: 15px;"><?= htmlspecialchars($txn['title']) ?></div>
+              <div style="font-size: 12px; color: var(--text-muted);"><?= htmlspecialchars($txn['description'] ?: 'Transaction') ?> &bull; <?= getFormattedDate($txn['created_at']) ?></div>
+            </div>
+            <div class="<?= $txn['direction'] === 'credit' ? 'txn-amount-credit' : 'txn-amount-debit' ?>">
+              <?= $txn['direction'] === 'credit' ? '+' : '-' ?> <?= formatCurrency((float)$txn['amount']) ?>
+            </div>
           </div>
-          <div>
-            <div style="font-weight: 800; font-size: 15px;">Order Payment</div>
-            <div style="font-size: 12px; color: var(--text-muted);">Instagram Followers &bull; 12 May 2025, 4:32 PM</div>
-          </div>
-        </div>
-        <div class="txn-amount-debit">- ₹35</div>
-      </div>
-
-      <div class="txn-card-item" data-type="add_funds">
-        <div style="display: flex; align-items: center; gap: 14px;">
-          <div class="brand-icon-box" style="width: 40px; height: 40px; background: #e0f2fe; color: #0284c7;">
-            <i data-lucide="zap"></i>
-          </div>
-          <div>
-            <div style="font-weight: 800; font-size: 15px;">Add Funds</div>
-            <div style="font-size: 12px; color: var(--text-muted);">Razorpay &bull; 10 May 2025, 11:20 AM</div>
-          </div>
-        </div>
-        <div class="txn-amount-credit">+ ₹200</div>
-      </div>
-
-      <div class="txn-card-item" data-type="order_payment">
-        <div style="display: flex; align-items: center; gap: 14px;">
-          <div class="brand-icon-box" style="width: 40px; height: 40px; background: #fee2e2; color: #dc2626;">
-            <i data-lucide="youtube"></i>
-          </div>
-          <div>
-            <div style="font-weight: 800; font-size: 15px;">Order Payment</div>
-            <div style="font-size: 12px; color: var(--text-muted);">YouTube Views &bull; 10 May 2025, 6:15 PM</div>
-          </div>
-        </div>
-        <div class="txn-amount-debit">- ₹120</div>
-      </div>
+        <?php endforeach; ?>
+      <?php endif; ?>
     </div>
   </div>
 
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="/assets/js/user.js"></script>
   <script>lucide.createIcons();</script>
 </body>
 </html>

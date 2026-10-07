@@ -1,12 +1,12 @@
 <?php
 /**
  * SMM Panel - Admin Module: Provider Management
- * Full Provider Features:
- * - Add, Edit, Delete, Enable/Disable
- * - API URL, API Key, Provider Balance, API Status
- * - Provider Service Mapping, Order Status Sync
+ * Protected Server-Side
  */
 require_once __DIR__ . '/../includes/admin-auth.php';
+$db = Database::getConnection();
+
+$providers = $db->query("SELECT * FROM providers ORDER BY id DESC")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -36,13 +36,6 @@ require_once __DIR__ . '/../includes/admin-auth.php';
     </div>
 
     <div class="data-table-card">
-      <div class="data-table-header">
-        <div>
-          <h3 style="font-size: 18px; font-weight: 800;">Integrated SMM API Providers</h3>
-          <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Credentials stored securely server-side. Synchronized via <code>cron/cron.php</code></p>
-        </div>
-      </div>
-
       <table class="app-table">
         <thead>
           <tr>
@@ -56,55 +49,36 @@ require_once __DIR__ . '/../includes/admin-auth.php';
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>#1</td>
-            <td><strong>GlobalSMM Prime API</strong></td>
-            <td><code>https://api.globalsmm.pro/v2</code></td>
-            <td><strong id="prov-bal-1" style="color: #10b981;">$428.60 USD</strong></td>
-            <td><span class="badge badge-success">Connected</span></td>
-            <td><span class="badge badge-success">Active</span></td>
-            <td>
-              <div style="display: flex; gap: 8px;">
-                <button class="btn-secondary" onclick="syncProviderBalance(1, this)" style="padding: 6px 10px; font-size: 12px;">
-                  <i data-lucide="refresh-cw"></i> Sync
-                </button>
-                <a href="/admin/provider-services.php?id=1" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;">
-                  Services
-                </a>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>#2</td>
-            <td><strong>TurboPanel Provider</strong></td>
-            <td><code>https://turbopanel.net/api/v2</code></td>
-            <td><strong id="prov-bal-2" style="color: #10b981;">$1,250.00 USD</strong></td>
-            <td><span class="badge badge-success">Connected</span></td>
-            <td><span class="badge badge-success">Active</span></td>
-            <td>
-              <div style="display: flex; gap: 8px;">
-                <button class="btn-secondary" onclick="syncProviderBalance(2, this)" style="padding: 6px 10px; font-size: 12px;">
-                  <i data-lucide="refresh-cw"></i> Sync
-                </button>
-                <a href="/admin/provider-services.php?id=2" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;">
-                  Services
-                </a>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>#3</td>
-            <td><strong>FastSocial Nexus</strong></td>
-            <td><code>https://nexus-smm.com/api/v2</code></td>
-            <td><strong id="prov-bal-3" style="color: #64748b;">$84.15 USD</strong></td>
-            <td><span class="badge badge-warning">Pending</span></td>
-            <td><span class="badge badge-danger">Disabled</span></td>
-            <td>
-              <button class="btn-secondary" onclick="toggleProviderStatus(3, 'disabled')" style="padding: 6px 10px; font-size: 12px;">
-                Enable
-              </button>
-            </td>
-          </tr>
+          <?php if (empty($providers)): ?>
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                <i data-lucide="server" style="width: 40px; height: 40px; margin-bottom: 8px; color: var(--text-light);"></i>
+                <p style="font-weight: 700;">No providers connected yet</p>
+                <span style="font-size: 13px;">Click "+ Add Provider" above to integrate your first SMM API v2 provider.</span>
+              </td>
+            </tr>
+          <?php else: ?>
+            <?php foreach ($providers as $prov): ?>
+              <tr>
+                <td>#<?= (int)$prov['id'] ?></td>
+                <td><strong><?= htmlspecialchars($prov['name']) ?></strong></td>
+                <td><code><?= htmlspecialchars($prov['api_url']) ?></code></td>
+                <td><strong id="prov-bal-<?= (int)$prov['id'] ?>" style="color: #10b981;">$<?= number_format((float)$prov['balance'], 2) ?> USD</strong></td>
+                <td><span class="badge <?= $prov['api_status'] === 'connected' ? 'badge-success' : 'badge-warning' ?>"><?= htmlspecialchars($prov['api_status']) ?></span></td>
+                <td><span class="badge <?= $prov['status'] === 'active' ? 'badge-success' : 'badge-danger' ?>"><?= htmlspecialchars($prov['status']) ?></span></td>
+                <td>
+                  <div style="display: flex; gap: 8px;">
+                    <button class="btn-secondary" onclick="syncProviderBalance(<?= (int)$prov['id'] ?>, this)" style="padding: 6px 10px; font-size: 12px;">
+                      <i data-lucide="refresh-cw"></i> Sync
+                    </button>
+                    <a href="/admin/provider-services.php?id=<?= (int)$prov['id'] ?>" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;">
+                      Services
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
         </tbody>
       </table>
     </div>
@@ -121,21 +95,21 @@ require_once __DIR__ . '/../includes/admin-auth.php';
       <form id="form-add-provider">
         <div style="margin-bottom: 16px;">
           <label class="form-field-label">Provider Name</label>
-          <input type="text" id="prov-name" placeholder="e.g. BulkSMM Official" required style="width: 100%;">
+          <input type="text" id="prov-name" placeholder="e.g. PeakPanel API" required style="width: 100%;">
         </div>
 
         <div style="margin-bottom: 16px;">
-          <label class="form-field-label">API URL</label>
-          <input type="url" id="prov-url" placeholder="https://api.bulksmm.net/api/v2" required style="width: 100%;">
+          <label class="form-field-label">API URL (Endpoint)</label>
+          <input type="url" id="prov-url" placeholder="https://api.provider.com/v2" required style="width: 100%;">
         </div>
 
         <div style="margin-bottom: 24px;">
           <label class="form-field-label">API Key (Stored Server-Side)</label>
-          <input type="text" id="prov-key" placeholder="sec_live_..." required style="width: 100%;">
+          <input type="password" id="prov-key" placeholder="sec_live_..." required style="width: 100%;">
         </div>
 
         <button type="submit" class="btn-primary">
-          Connect & Save Provider
+          Connect &amp; Save Provider
         </button>
       </form>
     </div>

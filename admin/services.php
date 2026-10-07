@@ -1,8 +1,18 @@
 <?php
 /**
  * SMM Panel - Admin Module: Services Catalog & Pricing
+ * Protected Server-Side
  */
 require_once __DIR__ . '/../includes/admin-auth.php';
+$db = Database::getConnection();
+
+$services = $db->query("
+    SELECT s.*, c.name as category_name, p.name as provider_name 
+    FROM services s 
+    LEFT JOIN categories c ON s.category_id = c.id 
+    LEFT JOIN providers p ON s.provider_id = p.id 
+    ORDER BY s.id DESC
+")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -21,7 +31,7 @@ require_once __DIR__ . '/../includes/admin-auth.php';
         <span class="back-icon-circle"><i data-lucide="arrow-left"></i></span>
         <span>Services Management</span>
       </a>
-      <button class="btn-primary" style="width: auto; padding: 10px 18px;" onclick="showToast('Add service modal', 'info')">
+      <button class="btn-primary" style="width: auto; padding: 10px 18px;" onclick="showToast('Add service modal ready', 'info')">
         + Add Service
       </button>
     </div>
@@ -36,61 +46,31 @@ require_once __DIR__ . '/../includes/admin-auth.php';
             <th>Rate / 1K</th>
             <th>Min / Max</th>
             <th>Mapped Provider</th>
-            <th>Provider Service ID</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>1</td>
-            <td><strong>Instagram Followers</strong></td>
-            <td>Instagram</td>
-            <td><strong>₹35.00</strong></td>
-            <td>1K / 1.01M</td>
-            <td>GlobalSMM Prime API</td>
-            <td><code>#101</code></td>
-            <td><span class="badge badge-success">Active</span></td>
-          </tr>
-          <tr>
-            <td>2</td>
-            <td><strong>Instagram Likes</strong></td>
-            <td>Instagram</td>
-            <td><strong>₹20.00</strong></td>
-            <td>100 / 500K</td>
-            <td>GlobalSMM Prime API</td>
-            <td><code>#102</code></td>
-            <td><span class="badge badge-success">Active</span></td>
-          </tr>
-          <tr>
-            <td>3</td>
-            <td><strong>Instagram Views</strong></td>
-            <td>Instagram</td>
-            <td><strong>₹15.00</strong></td>
-            <td>500 / 2M</td>
-            <td>GlobalSMM Prime API</td>
-            <td><code>#103</code></td>
-            <td><span class="badge badge-success">Active</span></td>
-          </tr>
-          <tr>
-            <td>4</td>
-            <td><strong>Instagram Comments</strong></td>
-            <td>Instagram</td>
-            <td><strong>₹50.00</strong></td>
-            <td>10 / 50K</td>
-            <td>GlobalSMM Prime API</td>
-            <td><code>#104</code></td>
-            <td><span class="badge badge-success">Active</span></td>
-          </tr>
-          <tr>
-            <td>5</td>
-            <td><strong>YouTube Views</strong></td>
-            <td>YouTube</td>
-            <td><strong>₹120.00</strong></td>
-            <td>1K / 1M</td>
-            <td>TurboPanel Provider</td>
-            <td><code>#201</code></td>
-            <td><span class="badge badge-success">Active</span></td>
-          </tr>
+          <?php if (empty($services)): ?>
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                <i data-lucide="layers" style="width: 40px; height: 40px; margin-bottom: 8px; color: var(--text-light);"></i>
+                <p style="font-weight: 700;">No services created yet</p>
+                <span style="font-size: 13px;">Click "+ Add Service" to add social media packages to your catalog.</span>
+              </td>
+            </tr>
+          <?php else: ?>
+            <?php foreach ($services as $s): ?>
+              <tr>
+                <td><?= (int)$s['id'] ?></td>
+                <td><strong><?= htmlspecialchars($s['name']) ?></strong></td>
+                <td><?= htmlspecialchars($s['category_name'] ?: 'General') ?></td>
+                <td><strong><?= formatCurrency((float)$s['rate_per_1k']) ?></strong></td>
+                <td><?= number_format($s['min_quantity']) ?> / <?= number_format($s['max_quantity']) ?></td>
+                <td><?= htmlspecialchars($s['provider_name'] ?: 'Manual') ?></td>
+                <td><span class="badge badge-success"><?= htmlspecialchars($s['status']) ?></span></td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
         </tbody>
       </table>
     </div>

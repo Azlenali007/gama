@@ -1,8 +1,18 @@
 <?php
 /**
  * SMM Panel - User Module: All Services
+ * Protected Server-Side
  */
 require_once __DIR__ . '/../includes/user-auth.php';
+$db = Database::getConnection();
+
+$services = $db->query("
+    SELECT s.*, c.name as category_name 
+    FROM services s 
+    LEFT JOIN categories c ON s.category_id = c.id 
+    WHERE s.status = 'active'
+    ORDER BY c.sort_order ASC, s.id ASC
+")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -23,60 +33,28 @@ require_once __DIR__ . '/../includes/user-auth.php';
       </a>
     </div>
 
-    <!-- Search Bar -->
     <div class="services-search-bar">
       <i data-lucide="search" class="services-search-icon"></i>
       <input type="text" class="services-search-input" placeholder="Search services...">
     </div>
 
-    <!-- Services Grid (Image 6) -->
     <div class="services-grid-cards">
-      <a href="/user/new-order.php" class="service-box-card">
-        <div class="service-box-icon" style="background: #fdf2f8; color: #db2777;">
-          <i data-lucide="instagram"></i>
+      <?php if (empty($services)): ?>
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; background: #fff; border-radius: 20px; border: 1px dashed var(--border-light); color: var(--text-muted);">
+          <i data-lucide="layers" style="width: 44px; height: 44px; margin-bottom: 12px; color: var(--text-light);"></i>
+          <p style="font-weight: 700; font-size: 15px;">No services available</p>
+          <span style="font-size: 13px;">No active services currently in catalog.</span>
         </div>
-        <div class="service-box-name">Followers</div>
-        <div class="service-box-price">₹35 <span style="font-size: 13px; color: var(--text-muted); font-weight: 500;">/ 1K</span></div>
-      </a>
-
-      <a href="/user/new-order.php" class="service-box-card">
-        <div class="service-box-icon" style="background: #fff1f2; color: #e11d48;">
-          <i data-lucide="heart"></i>
-        </div>
-        <div class="service-box-name">Likes</div>
-        <div class="service-box-price">₹20 <span style="font-size: 13px; color: var(--text-muted); font-weight: 500;">/ 1K</span></div>
-      </a>
-
-      <a href="/user/new-order.php" class="service-box-card">
-        <div class="service-box-icon" style="background: #f5f3ff; color: #7c3aed;">
-          <i data-lucide="play-circle"></i>
-        </div>
-        <div class="service-box-name">Views</div>
-        <div class="service-box-price">₹15 <span style="font-size: 13px; color: var(--text-muted); font-weight: 500;">/ 1K</span></div>
-      </a>
-
-      <a href="/user/new-order.php" class="service-box-card">
-        <div class="service-box-icon" style="background: #fffbeb; color: #d97706;">
-          <i data-lucide="message-square"></i>
-        </div>
-        <div class="service-box-name">Comments</div>
-        <div class="service-box-price">₹50 <span style="font-size: 13px; color: var(--text-muted); font-weight: 500;">/ 1K</span></div>
-      </a>
+      <?php else: ?>
+        <?php foreach ($services as $srv): ?>
+          <a href="/user/new-order.php?service=<?= (int)$srv['id'] ?>" class="service-box-card">
+            <div class="service-box-name"><?= htmlspecialchars($srv['name']) ?></div>
+            <div class="service-box-price"><?= formatCurrency((float)$srv['rate_per_1k']) ?> <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">/ 1K</span></div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Min: <?= (int)$srv['min_quantity'] ?> | Max: <?= (int)$srv['max_quantity'] ?></div>
+          </a>
+        <?php endforeach; ?>
+      <?php endif; ?>
     </div>
-
-    <!-- Promo Quality Banner (Image 6) -->
-    <a href="/user/new-order.php" class="promo-quality-card">
-      <div class="promo-info-group">
-        <div class="promo-icon-badge">
-          <i data-lucide="shield-check"></i>
-        </div>
-        <div>
-          <div class="promo-title">Premium Quality Services</div>
-          <div class="promo-subtitle">Boost your social media presence today!</div>
-        </div>
-      </div>
-      <i data-lucide="chevron-right"></i>
-    </a>
   </div>
 
   <script src="https://unpkg.com/lucide@latest"></script>

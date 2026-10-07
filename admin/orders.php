@@ -1,8 +1,18 @@
 <?php
 /**
  * SMM Panel - Admin Module: Orders Management
+ * Protected Server-Side
  */
 require_once __DIR__ . '/../includes/admin-auth.php';
+$db = Database::getConnection();
+
+$orders = $db->query("
+    SELECT o.*, u.name as user_name, u.user_id_code, s.name as service_name
+    FROM orders o
+    LEFT JOIN users u ON o.user_id = u.id
+    LEFT JOIN services s ON o.service_id = s.id
+    ORDER BY o.id DESC
+")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -38,69 +48,37 @@ require_once __DIR__ . '/../includes/admin-auth.php';
             <th>Charge</th>
             <th>Provider ID</th>
             <th>Status</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td><strong>#10254</strong></td>
-            <td>Aaris Ali (#1024)</td>
-            <td>Instagram Followers</td>
-            <td><span style="color: var(--primary-blue);">instagram.com/aarisali_official</span></td>
-            <td>1,000</td>
-            <td>₹35.00</td>
-            <td><code>EXT_ORD_88921</code></td>
-            <td><span class="badge badge-warning">Processing</span></td>
-            <td>
-              <button class="btn-secondary" onclick="showToast('Synced order #10254 with provider', 'success')" style="padding: 6px 10px; font-size: 12px;">Sync</button>
-            </td>
-          </tr>
-          <tr>
-            <td><strong>#10253</strong></td>
-            <td>Aaris Ali (#1024)</td>
-            <td>YouTube Views</td>
-            <td><span style="color: var(--primary-blue);">youtube.com/watch?v=smmDemoVideo</span></td>
-            <td>5,000</td>
-            <td>₹120.00</td>
-            <td><code>EXT_ORD_88710</code></td>
-            <td><span class="badge badge-success">Completed</span></td>
-            <td>
-              <button class="btn-secondary" onclick="showToast('Order #10253 is completed', 'info')" style="padding: 6px 10px; font-size: 12px;">Details</button>
-            </td>
-          </tr>
-          <tr>
-            <td><strong>#10252</strong></td>
-            <td>Aaris Ali (#1024)</td>
-            <td>Telegram Members</td>
-            <td><span style="color: var(--primary-blue);">t.me/techcommunity_in</span></td>
-            <td>2,000</td>
-            <td>₹90.00</td>
-            <td><code>EXT_ORD_88540</code></td>
-            <td><span class="badge badge-warning">Processing</span></td>
-            <td>
-              <button class="btn-secondary" onclick="showToast('Synced order #10252', 'success')" style="padding: 6px 10px; font-size: 12px;">Sync</button>
-            </td>
-          </tr>
-          <tr>
-            <td><strong>#10251</strong></td>
-            <td>Aaris Ali (#1024)</td>
-            <td>Instagram Likes</td>
-            <td><span style="color: var(--primary-blue);">instagram.com/p/C_demoPhoto99</span></td>
-            <td>1,000</td>
-            <td>₹20.00</td>
-            <td><code>EXT_ORD_88412</code></td>
-            <td><span class="badge badge-success">Completed</span></td>
-            <td>
-              <button class="btn-secondary" onclick="showToast('Order #10251 is completed', 'info')" style="padding: 6px 10px; font-size: 12px;">Details</button>
-            </td>
-          </tr>
+          <?php if (empty($orders)): ?>
+            <tr>
+              <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                <i data-lucide="shopping-bag" style="width: 40px; height: 40px; margin-bottom: 8px; color: var(--text-light);"></i>
+                <p style="font-weight: 700;">No customer orders yet</p>
+                <span style="font-size: 13px;">Placed orders will display here with live provider synchronization.</span>
+              </td>
+            </tr>
+          <?php else: ?>
+            <?php foreach ($orders as $o): ?>
+              <tr>
+                <td><strong><?= htmlspecialchars($o['order_code']) ?></strong></td>
+                <td><?= htmlspecialchars($o['user_name'] ?: 'User') ?> (<?= htmlspecialchars($o['user_id_code'] ?: '#') ?>)</td>
+                <td><?= htmlspecialchars($o['service_name'] ?: 'Service') ?></td>
+                <td><span style="color: var(--primary-blue); font-size: 12px;"><?= htmlspecialchars(substr($o['target_link'], 0, 35)) ?>...</span></td>
+                <td><?= number_format($o['quantity']) ?></td>
+                <td><?= formatCurrency((float)$o['charge']) ?></td>
+                <td><code><?= htmlspecialchars($o['provider_order_id'] ?: 'Pending') ?></code></td>
+                <td><span class="badge <?= getStatusBadgeClass($o['status']) ?>"><?= htmlspecialchars($o['status']) ?></span></td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
         </tbody>
       </table>
     </div>
   </div>
 
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="/assets/js/user.js"></script>
   <script>lucide.createIcons();</script>
 </body>
 </html>
